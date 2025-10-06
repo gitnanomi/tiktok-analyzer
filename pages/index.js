@@ -17,16 +17,26 @@ export default function Home() {
     setResult(null);
 
     try {
-      // 模拟分析（3秒后显示结果）
-      // 真实版本会调用 /api/analyze
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      
-      setResult({
-        duration: '0:32',
-        fps: '30fps',
-        resolution: '1080x1920',
-        analysis: 'Video analyzed successfully! This is a demo result.'
-      });
+  // 调用真实API
+  const response = await fetch('/api/analyze', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ url }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || 'Analysis failed');
+  }
+
+  setResult({
+    url: data.url,
+    analysis: data.analysis,
+    timestamp: data.timestamp
+  });
     } catch (err) {
       setError('Analysis failed. Please try again.');
     } finally {
@@ -191,10 +201,9 @@ export default function Home() {
                   fontSize: '14px',
                   color: '#333'
                 }}>
-                  <p style={{ marginBottom: '8px' }}><strong>Duration:</strong> {result.duration}</p>
-                  <p style={{ marginBottom: '8px' }}><strong>FPS:</strong> {result.fps}</p>
-                  <p style={{ marginBottom: '8px' }}><strong>Resolution:</strong> {result.resolution}</p>
-                  <p style={{ margin: 0 }}><strong>Status:</strong> {result.analysis}</p>
+                 <div style={{ whiteSpace: 'pre-wrap', lineHeight: '1.8' }}>
+  {result.analysis}
+</div>
                 </div>
               </div>
             )}
