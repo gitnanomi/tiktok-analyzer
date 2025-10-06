@@ -1,8 +1,44 @@
+import { useState } from 'react';
+
 export default function Home() {
+  const [url, setUrl] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState('');
+
+  const handleAnalyze = async () => {
+    if (!url.includes('tiktok.com')) {
+      setError('Please enter a valid TikTok URL');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+    setResult(null);
+
+    try {
+      // 模拟分析（3秒后显示结果）
+      // 真实版本会调用 /api/analyze
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      
+      setResult({
+        duration: '0:32',
+        fps: '30fps',
+        resolution: '1080x1920',
+        analysis: 'Video analyzed successfully! This is a demo result.'
+      });
+    } catch (err) {
+      setError('Analysis failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <html>
       <head>
         <title>TikTok Analyzer</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
         <style>{`
           * {
             margin: 0;
@@ -11,6 +47,12 @@ export default function Home() {
           }
           body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+          }
+          @keyframes spin {
+            to { transform: rotate(360deg); }
+          }
+          .spinner {
+            animation: spin 1s linear infinite;
           }
         `}</style>
       </head>
@@ -59,7 +101,11 @@ export default function Home() {
             }}>
               <input
                 type="text"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleAnalyze()}
                 placeholder="Paste TikTok video URL here..."
+                disabled={loading}
                 style={{
                   width: '100%',
                   padding: '18px 24px',
@@ -68,53 +114,120 @@ export default function Home() {
                   borderRadius: '12px',
                   marginBottom: '16px',
                   outline: 'none',
-                  transition: 'all 0.3s'
+                  opacity: loading ? 0.6 : 1
                 }}
               />
-              <button style={{
-                width: '100%',
-                padding: '18px',
-                fontSize: '18px',
-                fontWeight: 'bold',
-                color: 'white',
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                border: 'none',
-                borderRadius: '12px',
-                cursor: 'pointer',
-                transition: 'transform 0.2s',
-                boxShadow: '0 4px 15px rgba(102, 126, 234, 0.4)'
-              }}>
-                🔍 Analyze Video
+              <button 
+                onClick={handleAnalyze}
+                disabled={loading || !url}
+                style={{
+                  width: '100%',
+                  padding: '18px',
+                  fontSize: '18px',
+                  fontWeight: 'bold',
+                  color: 'white',
+                  background: loading || !url 
+                    ? '#ccc' 
+                    : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  border: 'none',
+                  borderRadius: '12px',
+                  cursor: loading || !url ? 'not-allowed' : 'pointer',
+                  boxShadow: loading || !url ? 'none' : '0 4px 15px rgba(102, 126, 234, 0.4)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '12px'
+                }}>
+                {loading ? (
+                  <>
+                    <div className="spinner" style={{
+                      width: '20px',
+                      height: '20px',
+                      border: '3px solid rgba(255,255,255,0.3)',
+                      borderTop: '3px solid white',
+                      borderRadius: '50%'
+                    }}></div>
+                    Analyzing...
+                  </>
+                ) : (
+                  <>🔍 Analyze Video</>
+                )}
               </button>
             </div>
 
-            <div style={{
-              background: 'linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%)',
-              padding: '20px',
-              borderRadius: '12px',
-              textAlign: 'center'
-            }}>
-              <p style={{
-                margin: 0,
-                fontSize: '16px',
-                fontWeight: '600',
-                color: '#2d5016'
+            {error && (
+              <div style={{
+                background: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%)',
+                padding: '20px',
+                borderRadius: '12px',
+                marginBottom: '24px',
+                color: 'white',
+                textAlign: 'center',
+                fontWeight: '600'
               }}>
-                ✅ Platform Successfully Deployed!
-              </p>
-              <p style={{
-                margin: '8px 0 0 0',
-                fontSize: '14px',
-                color: '#4a7c3a'
+                ❌ {error}
+              </div>
+            )}
+
+            {result && (
+              <div style={{
+                background: 'linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%)',
+                padding: '24px',
+                borderRadius: '12px',
+                marginBottom: '24px'
               }}>
-                Ready to analyze TikTok videos
-              </p>
-            </div>
+                <h3 style={{
+                  fontSize: '20px',
+                  fontWeight: 'bold',
+                  color: '#2d5016',
+                  marginBottom: '16px'
+                }}>
+                  ✅ Analysis Complete!
+                </h3>
+                <div style={{
+                  background: 'rgba(255,255,255,0.8)',
+                  padding: '16px',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  color: '#333'
+                }}>
+                  <p style={{ marginBottom: '8px' }}><strong>Duration:</strong> {result.duration}</p>
+                  <p style={{ marginBottom: '8px' }}><strong>FPS:</strong> {result.fps}</p>
+                  <p style={{ marginBottom: '8px' }}><strong>Resolution:</strong> {result.resolution}</p>
+                  <p style={{ margin: 0 }}><strong>Status:</strong> {result.analysis}</p>
+                </div>
+              </div>
+            )}
+
+            {!result && !loading && (
+              <div style={{
+                background: 'linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%)',
+                padding: '20px',
+                borderRadius: '12px',
+                textAlign: 'center',
+                marginBottom: '24px'
+              }}>
+                <p style={{
+                  margin: 0,
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  color: '#2d5016'
+                }}>
+                  ✅ Platform Successfully Deployed!
+                </p>
+                <p style={{
+                  margin: '8px 0 0 0',
+                  fontSize: '14px',
+                  color: '#4a7c3a'
+                }}>
+                  Ready to analyze TikTok videos
+                </p>
+              </div>
+            )}
 
             <div style={{
-              marginTop: '32px',
               display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
               gap: '16px'
             }}>
               <div style={{
