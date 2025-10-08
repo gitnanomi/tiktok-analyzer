@@ -19,18 +19,12 @@ export default function Home() {
     try {
       const response = await fetch('/api/analyze', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url }),
       });
 
       const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Analysis failed');
-      }
-
+      if (!response.ok) throw new Error(data.error || 'Analysis failed');
       setResult(data);
     } catch (err) {
       setError(err.message || 'Analysis failed. Please try again.');
@@ -39,108 +33,148 @@ export default function Home() {
     }
   };
 
+  // 解析和格式化分析文本
+  const parseAnalysis = (text) => {
+    if (!text) return [];
+    
+    const modules = [
+      { id: 1, emoji: '🎯', title: 'HOOK ANALYSIS', color: 'from-red-500 to-pink-500', bg: 'bg-red-50', border: 'border-red-200' },
+      { id: 2, emoji: '📖', title: 'STORYLINE BREAKDOWN', color: 'from-blue-500 to-indigo-500', bg: 'bg-blue-50', border: 'border-blue-200' },
+      { id: 3, emoji: '📢', title: 'CTA', color: 'from-green-500 to-emerald-500', bg: 'bg-green-50', border: 'border-green-200' },
+      { id: 4, emoji: '⏱️', title: 'TIMING', color: 'from-yellow-500 to-orange-500', bg: 'bg-yellow-50', border: 'border-yellow-200' },
+      { id: 5, emoji: '📝', title: 'COMPLETE SCRIPT', color: 'from-purple-500 to-violet-500', bg: 'bg-purple-50', border: 'border-purple-200' },
+      { id: 6, emoji: '🤖', title: 'AI PROMPT LIBRARY', color: 'from-pink-500 to-rose-500', bg: 'bg-pink-50', border: 'border-pink-200' }
+    ];
+
+    const sections = [];
+    const lines = text.split('\n');
+    let currentModule = null;
+    let currentContent = [];
+
+    for (let line of lines) {
+      // 检测模块标题
+      const moduleMatch = line.match(/##\s*(\d)️⃣\s*(.+)/);
+      if (moduleMatch) {
+        // 保存上一个模块
+        if (currentModule) {
+          sections.push({
+            ...currentModule,
+            content: currentContent.join('\n')
+          });
+        }
+        // 开始新模块
+        const moduleNum = parseInt(moduleMatch[1]);
+        currentModule = modules[moduleNum - 1];
+        currentContent = [];
+      } else if (currentModule) {
+        currentContent.push(line);
+      }
+    }
+
+    // 保存最后一个模块
+    if (currentModule) {
+      sections.push({
+        ...currentModule,
+        content: currentContent.join('\n')
+      });
+    }
+
+    return sections;
+  };
+
+  // 格式化模块内容
+  const formatContent = (content) => {
+    return content
+      .split('\n')
+      .map((line, i) => {
+        // 粗体
+        line = line.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+        
+        // 标题
+        if (line.startsWith('###')) {
+          return `<h3 key="${i}" style="font-size: 1.25rem; font-weight: bold; margin-top: 1.5rem; margin-bottom: 0.75rem; color: #1f2937;">${line.substring(4)}</h3>`;
+        }
+        if (line.startsWith('**') && line.endsWith('**')) {
+          return `<h4 key="${i}" style="font-weight: 600; margin-top: 1rem; margin-bottom: 0.5rem; color: #374151;">${line.slice(2, -2)}</h4>`;
+        }
+        
+        // 列表
+        if (line.trim().startsWith('- ')) {
+          return `<li key="${i}" style="margin-left: 1.5rem; margin-bottom: 0.5rem; color: #4b5563;">${line.substring(2)}</li>`;
+        }
+        
+        // 代码块
+        if (line.trim().startsWith('```')) {
+          return '';
+        }
+        
+        // 空行
+        if (line.trim() === '') {
+          return '<br key="' + i + '" />';
+        }
+        
+        // 普通段落
+        return `<p key="${i}" style="margin-bottom: 0.75rem; line-height: 1.75; color: #374151;">${line}</p>`;
+      })
+      .join('');
+  };
+
+  const modules = result ? parseAnalysis(result.analysis) : [];
+
   return (
     <html lang="en">
       <head>
         <title>TikTok Analyzer - 6 Core Modules</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <script src="https://cdn.tailwindcss.com"></script>
-        <style>{`
-          * { margin: 0; padding: 0; box-sizing: border-box; }
-          body { 
-            font-family: system-ui, -apple-system, sans-serif; 
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-            min-height: 100vh; 
-          }
-          @keyframes spin { to { transform: rotate(360deg); } }
-          .spinner { animation: spin 1s linear infinite; }
-          .module-card { transition: all 0.3s ease; }
-          .module-card:hover { transform: translateY(-5px); box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
-        `}</style>
       </head>
-      <body style={{ padding: '24px' }}>
-        <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
+      <body className="bg-gradient-to-br from-purple-600 via-purple-700 to-indigo-800 min-h-screen p-6">
+        <div className="max-w-7xl mx-auto">
           {/* Header */}
-          <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-            <h1 style={{ fontSize: '3rem', fontWeight: '900', color: 'white', marginBottom: '12px' }}>
-              🎬 TikTok Video Analyzer
-            </h1>
-            <p style={{ fontSize: '1.25rem', color: 'rgba(255,255,255,0.9)' }}>
-              6-Module Deep Analysis System
-            </p>
+          <div className="text-center mb-12">
+            <h1 className="text-6xl font-black text-white mb-4">🎬 TikTok Analyzer</h1>
+            <p className="text-2xl text-white/90 font-medium">6-Module Deep Analysis System</p>
           </div>
 
           {/* Input Section */}
           {!loading && !result && (
-            <div style={{ background: 'white', borderRadius: '24px', boxShadow: '0 25px 50px rgba(0,0,0,0.3)', padding: '32px', marginBottom: '32px' }}>
-              <div style={{ display: 'flex', gap: '16px', marginBottom: '24px', flexWrap: 'wrap' }}>
+            <div className="bg-white rounded-3xl shadow-2xl p-8 mb-8">
+              <div className="flex gap-4 mb-6 flex-wrap">
                 <input
                   type="text"
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleAnalyze()}
                   placeholder="🔗 Paste TikTok URL..."
-                  style={{
-                    flex: 1,
-                    minWidth: '300px',
-                    padding: '16px 24px',
-                    fontSize: '18px',
-                    border: '2px solid #a78bfa',
-                    borderRadius: '16px',
-                    outline: 'none'
-                  }}
+                  className="flex-1 min-w-[300px] px-6 py-4 text-lg border-2 border-purple-300 rounded-2xl focus:outline-none focus:ring-4 focus:ring-purple-400"
                 />
                 <button
                   onClick={handleAnalyze}
                   disabled={!url}
-                  style={{
-                    padding: '16px 40px',
-                    background: url ? 'linear-gradient(135deg, #a78bfa 0%, #ec4899 100%)' : '#ccc',
-                    color: 'white',
-                    fontSize: '18px',
-                    fontWeight: 'bold',
-                    borderRadius: '16px',
-                    border: 'none',
-                    cursor: url ? 'pointer' : 'not-allowed',
-                    boxShadow: url ? '0 4px 15px rgba(167,139,250,0.4)' : 'none'
-                  }}
+                  className="px-10 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-lg font-bold rounded-2xl hover:shadow-2xl transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   🚀 Analyze
                 </button>
               </div>
 
-              {/* 6 Module Cards */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '16px' }}>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                 {[
-                  { emoji: '🎯', label: 'HOOK', bg: '#fee2e2' },
-                  { emoji: '📖', label: 'STORYLINE', bg: '#dbeafe' },
-                  { emoji: '📢', label: 'CTA', bg: '#d1fae5' },
-                  { emoji: '⏱️', label: 'TIMING', bg: '#fef3c7' },
-                  { emoji: '📝', label: 'SCRIPT', bg: '#e9d5ff' },
-                  { emoji: '🤖', label: 'AI PROMPTS', bg: '#fce7f3' }
-                ].map((module, i) => (
-                  <div key={i} className="module-card" style={{
-                    background: module.bg,
-                    padding: '16px',
-                    borderRadius: '12px',
-                    textAlign: 'center'
-                  }}>
-                    <div style={{ fontSize: '2rem', marginBottom: '8px' }}>{module.emoji}</div>
-                    <div style={{ fontWeight: 'bold', fontSize: '12px' }}>{module.label}</div>
+                  { emoji: '🎯', label: 'HOOK', bg: 'bg-red-100' },
+                  { emoji: '📖', label: 'STORYLINE', bg: 'bg-blue-100' },
+                  { emoji: '📢', label: 'CTA', bg: 'bg-green-100' },
+                  { emoji: '⏱️', label: 'TIMING', bg: 'bg-yellow-100' },
+                  { emoji: '📝', label: 'SCRIPT', bg: 'bg-purple-100' },
+                  { emoji: '🤖', label: 'AI PROMPTS', bg: 'bg-pink-100' }
+                ].map((m, i) => (
+                  <div key={i} className={`${m.bg} p-4 rounded-xl text-center hover:scale-105 transition`}>
+                    <div className="text-3xl mb-2">{m.emoji}</div>
+                    <div className="font-bold text-xs">{m.label}</div>
                   </div>
                 ))}
               </div>
 
               {error && (
-                <div style={{
-                  marginTop: '24px',
-                  padding: '16px',
-                  background: '#fee2e2',
-                  border: '2px solid #ef4444',
-                  borderRadius: '12px',
-                  color: '#991b1b',
-                  fontWeight: '600'
-                }}>
+                <div className="mt-6 p-4 bg-red-100 border-2 border-red-400 rounded-xl text-red-800 font-semibold">
                   ❌ {error}
                 </div>
               )}
@@ -149,93 +183,61 @@ export default function Home() {
 
           {/* Loading */}
           {loading && (
-            <div style={{ background: 'white', borderRadius: '24px', boxShadow: '0 25px 50px rgba(0,0,0,0.3)', padding: '64px', textAlign: 'center' }}>
-              <div className="spinner" style={{
-                width: '64px',
-                height: '64px',
-                border: '8px solid #e9d5ff',
-                borderTop: '8px solid #a78bfa',
-                borderRadius: '50%',
-                margin: '0 auto 24px'
-              }}></div>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#1f2937', marginBottom: '12px' }}>
-                Analyzing Video...
-              </h2>
-              <p style={{ color: '#6b7280' }}>Extracting 6 core modules</p>
+            <div className="bg-white rounded-3xl shadow-2xl p-16 text-center">
+              <div className="w-16 h-16 border-8 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto mb-6"></div>
+              <h2 className="text-2xl font-bold text-gray-800 mb-3">Analyzing Video...</h2>
+              <p className="text-gray-600">Extracting 6 core modules</p>
             </div>
           )}
 
-          {/* Results */}
-          {result && (
+          {/* Results - Beautiful Module Cards */}
+          {result && modules.length > 0 && (
             <div>
-              {/* Video Info Header */}
-              <div style={{
-                background: 'linear-gradient(135deg, #a78bfa 0%, #ec4899 100%)',
-                borderRadius: '24px',
-                padding: '32px',
-                marginBottom: '24px',
-                color: 'white',
-                boxShadow: '0 10px 30px rgba(0,0,0,0.3)'
-              }}>
-                <h2 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '16px' }}>
-                  📊 Video Analysis Complete!
-                </h2>
-                {result.videoData && (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
-                    {result.videoData.author && (
-                      <div style={{ background: 'rgba(255,255,255,0.2)', padding: '16px', borderRadius: '12px' }}>
-                        <div style={{ fontSize: '0.875rem', opacity: 0.8 }}>Creator</div>
-                        <div style={{ fontWeight: 'bold', fontSize: '1.125rem' }}>@{result.videoData.author}</div>
-                      </div>
-                    )}
-                    <div style={{ background: 'rgba(255,255,255,0.2)', padding: '16px', borderRadius: '12px' }}>
-                      <div style={{ fontSize: '0.875rem', opacity: 0.8 }}>Blueprint Sections</div>
-                      <div style={{ fontWeight: 'bold', fontSize: '1.125rem' }}>6 Complete Modules</div>
-                    </div>
+              {/* Video Info */}
+              <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-3xl p-8 mb-6 text-white shadow-2xl">
+                <h2 className="text-3xl font-bold mb-4">📊 Analysis Complete!</h2>
+                {result.videoData && result.videoData.author && (
+                  <div className="bg-white/20 backdrop-blur rounded-xl p-4">
+                    <span className="opacity-80">Creator: </span>
+                    <span className="font-bold text-lg">@{result.videoData.author}</span>
                   </div>
                 )}
               </div>
 
-              {/* Analysis Content */}
-              <div style={{
-                background: 'white',
-                borderRadius: '24px',
-                padding: '48px',
-                boxShadow: '0 25px 50px rgba(0,0,0,0.3)',
-                marginBottom: '24px'
-              }}>
-                <div style={{
-                  maxHeight: '70vh',
-                  overflowY: 'auto',
-                  whiteSpace: 'pre-wrap',
-                  lineHeight: '1.8',
-                  fontSize: '16px',
-                  color: '#1f2937'
-                }}>
-                  {result.analysis}
-                </div>
+              {/* Module Cards */}
+              <div className="space-y-6 mb-8">
+                {modules.map((module, idx) => (
+                  <div key={idx} className="bg-white rounded-3xl shadow-2xl p-8 hover:shadow-3xl transition">
+                    {/* Module Header */}
+                    <div className={`bg-gradient-to-r ${module.color} rounded-2xl p-6 mb-6 text-white`}>
+                      <div className="flex items-center gap-4">
+                        <span className="text-5xl">{module.emoji}</span>
+                        <div>
+                          <div className="text-sm opacity-80">Module {module.id}</div>
+                          <h2 className="text-3xl font-black">{module.title}</h2>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Module Content */}
+                    <div 
+                      className={`${module.bg} rounded-2xl p-8 border-2 ${module.border}`}
+                      dangerouslySetInnerHTML={{ __html: formatContent(module.content) }}
+                    />
+                  </div>
+                ))}
               </div>
 
               {/* Action Buttons */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <button
                   onClick={() => {
                     navigator.clipboard.writeText(result.analysis);
-                    alert('✅ Copied to clipboard!');
+                    alert('✅ Copied!');
                   }}
-                  style={{
-                    padding: '20px',
-                    background: 'linear-gradient(135deg, #a78bfa 0%, #ec4899 100%)',
-                    color: 'white',
-                    fontSize: '18px',
-                    fontWeight: 'bold',
-                    borderRadius: '16px',
-                    border: 'none',
-                    cursor: 'pointer',
-                    boxShadow: '0 4px 15px rgba(167,139,250,0.4)'
-                  }}
+                  className="px-8 py-5 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-lg font-bold rounded-2xl hover:shadow-2xl transition"
                 >
-                  📋 Copy Analysis
+                  📋 Copy All
                 </button>
                 <button
                   onClick={() => {
@@ -246,17 +248,7 @@ export default function Home() {
                     a.download = 'tiktok-analysis.txt';
                     a.click();
                   }}
-                  style={{
-                    padding: '20px',
-                    background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
-                    color: 'white',
-                    fontSize: '18px',
-                    fontWeight: 'bold',
-                    borderRadius: '16px',
-                    border: 'none',
-                    cursor: 'pointer',
-                    boxShadow: '0 4px 15px rgba(59,130,246,0.4)'
-                  }}
+                  className="px-8 py-5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-lg font-bold rounded-2xl hover:shadow-2xl transition"
                 >
                   💾 Download
                 </button>
@@ -265,18 +257,9 @@ export default function Home() {
                     setResult(null);
                     setUrl('');
                   }}
-                  style={{
-                    padding: '20px',
-                    background: '#4b5563',
-                    color: 'white',
-                    fontSize: '18px',
-                    fontWeight: 'bold',
-                    borderRadius: '16px',
-                    border: 'none',
-                    cursor: 'pointer'
-                  }}
+                  className="px-8 py-5 bg-gray-700 text-white text-lg font-bold rounded-2xl hover:shadow-2xl transition"
                 >
-                  🔄 Analyze Another
+                  🔄 New Analysis
                 </button>
               </div>
             </div>
