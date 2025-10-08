@@ -13,6 +13,8 @@
     "react-dom": "^18.2.0",
     "openai": "^4.20.1",
     "lucide-react": "^0.263.1"
+    "cheerio": "^1.0.0-rc.12"
+     }
   },
   "devDependencies": {
     "autoprefixer": "^10.4.16",
