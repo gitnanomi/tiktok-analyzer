@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import axios from 'axios';
+import TikTokScraper from 'tiktok-scraper';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -13,68 +13,96 @@ export default async function handler(req, res) {
   }
 
   try {
-    // 步骤 1: 从 URL 提取视频 ID
-    const videoId = extractVideoId(url);
-    if (!videoId) {
-      return res.status(400).json({ error: 'Could not extract video ID from URL' });
-    }
-
-    // 步骤 2: 获取 TikTok 视频元数据
-    const videoData = await getTikTokVideoData(videoId);
+    // 步骤 1: 使用 tiktok-scraper 获取视频信息
+    console.log('Fetching TikTok video data for:', url);
     
-    if (!videoData) {
+    const videoData = await TikTokScraper.getVideoMeta(url, {
+      noWaterMark: false,
+      hdVideo: false
+    });
+
+    if (!videoData || !videoData.collector || videoData.collector.length === 0) {
       return res.status(404).json({ error: 'Video not found or unavailable' });
     }
 
-    // 步骤 3: 使用 OpenAI 分析视频数据
+    const video = videoData.collector[0];
+    
+    console.log('Video data retrieved:', {
+      id: video.id,
+      text: video.text?.substring(0, 50),
+      author: video.authorMeta?.name
+    });
+
+    // 步骤 2: 使用 OpenAI 分析视频数据
     const openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
     });
 
+    // 提取 hashtags
+    const hashtags = video.hashtags ? video.hashtags.map(tag => `#${tag.name}`).join(' ') : 'None';
+    
+    // 格式化统计数据
+    const stats = {
+      views: video.playCount || 0,
+      likes: video.diggCount || 0,
+      comments: video.commentCount || 0,
+      shares: video.shareCount || 0
+    };
+
     const analysisPrompt = `
 Analyze this TikTok video based on the following information:
 
-**Video Title/Description:** ${videoData.description || 'No description'}
+**Video Description:** 
+${video.text || 'No description available'}
 
-**Hashtags:** ${videoData.hashtags ? videoData.hashtags.join(', ') : 'None'}
+**Hashtags:** ${hashtags}
 
-**Duration:** ${videoData.duration || 'Unknown'} seconds
+**Duration:** ${video.videoMeta?.duration || 'Unknown'} seconds
 
-**Stats:**
-- Views: ${videoData.viewCount || 0}
-- Likes: ${videoData.likeCount || 0}
-- Comments: ${videoData.commentCount || 0}
-- Shares: ${videoData.shareCount || 0}
+**Performance Stats:**
+- 👁️ Views: ${stats.views.toLocaleString()}
+- ❤️ Likes: ${stats.likes.toLocaleString()}
+- 💬 Comments: ${stats.comments.toLocaleString()}
+- 🔄 Shares: ${stats.shares.toLocaleString()}
+- 📊 Engagement Rate: ${calculateEngagementRate(stats)}%
 
-**Music:** ${videoData.musicTitle || 'Unknown'}
+**Music:** ${video.musicMeta?.musicName || 'Unknown'}
 
-**Creator:** @${videoData.authorUsername || 'Unknown'}
+**Creator:** @${video.authorMeta?.name || 'Unknown'} (${video.authorMeta?.fans?.toLocaleString() || 0} followers)
 
-Please provide a comprehensive analysis in the following format:
+**Posted:** ${video.createTime ? new Date(video.createTime * 1000).toLocaleDateString() : 'Unknown'}
 
-## 🎯 Hook Analysis
-[Analyze the opening/hook based on the description and title]
+Please provide a comprehensive analysis in this format:
 
-## 📝 Content Structure
-[Analyze how the content is structured]
+## 🎯 Hook & Opening Analysis
+Analyze the first 3 seconds based on the description and context. What makes viewers stop scrolling?
 
-## 💬 Script & Messaging
-[Analyze the text, hashtags, and messaging strategy]
+## 📝 Content Strategy
+Evaluate the overall content approach, theme, and messaging.
+
+## 💬 Caption & Hashtag Strategy
+Analyze the effectiveness of the caption and hashtag selection.
 
 ## 🎵 Audio Strategy
-[Comment on the music choice]
+Comment on the music choice and its relevance to the content.
 
-## 📊 Performance Insights
-[Analyze the engagement metrics and what they indicate]
+## 📊 Performance Analysis
+Based on the metrics, evaluate:
+- Engagement quality (likes, comments, shares ratio)
+- Audience reception
+- What's working well
 
 ## 🎬 Call-to-Action (CTA)
-[Identify any CTAs in the description or hashtags]
+Identify any CTAs and evaluate their effectiveness.
 
-## ⭐ Key Recommendations
-[Provide 3-5 actionable recommendations for improvement]
+## ⭐ Key Strengths
+List 3-5 things this video does really well.
 
-## 🔥 Viral Potential Score
-[Rate the viral potential 1-10 and explain why]
+## 🚀 Improvement Recommendations
+Provide 3-5 specific, actionable suggestions to boost performance.
+
+## 🔥 Viral Potential Score: X/10
+Rate the viral potential and explain the reasoning.
 `;
 
     const completion = await openai.chat.completions.create({
@@ -82,7 +110,7 @@ Please provide a comprehensive analysis in the following format:
       messages: [
         {
           role: "system",
-          content: "You are an expert TikTok content strategist and video analyst. Provide detailed, actionable insights based on video metadata and performance metrics."
+          content: "You are an expert TikTok content strategist and viral video analyst. Provide detailed, actionable insights based on video metadata, description, and performance metrics. Be specific and practical."
         },
         {
           role: "user",
@@ -95,20 +123,27 @@ Please provide a comprehensive analysis in the following format:
 
     const analysis = completion.choices[0].message.content;
 
+    // 返回完整数据
     return res.status(200).json({
       success: true,
       url: url,
       videoData: {
-        description: videoData.description,
-        hashtags: videoData.hashtags,
-        stats: {
-          views: videoData.viewCount,
-          likes: videoData.likeCount,
-          comments: videoData.commentCount,
-          shares: videoData.shareCount
+        id: video.id,
+        description: video.text,
+        hashtags: video.hashtags ? video.hashtags.map(tag => tag.name) : [],
+        duration: video.videoMeta?.duration,
+        stats: stats,
+        author: {
+          username: video.authorMeta?.name,
+          nickname: video.authorMeta?.nickName,
+          followers: video.authorMeta?.fans,
+          verified: video.authorMeta?.verified
         },
-        author: videoData.authorUsername,
-        music: videoData.musicTitle
+        music: {
+          title: video.musicMeta?.musicName,
+          author: video.musicMeta?.musicAuthor
+        },
+        createdAt: video.createTime ? new Date(video.createTime * 1000).toISOString() : null
       },
       analysis: analysis,
       timestamp: new Date().toISOString()
@@ -116,98 +151,31 @@ Please provide a comprehensive analysis in the following format:
 
   } catch (error) {
     console.error('Analysis error:', error);
+    
+    // 更详细的错误信息
+    let errorMessage = 'Analysis failed';
+    
+    if (error.message?.includes('video not available')) {
+      errorMessage = 'Video is private or unavailable';
+    } else if (error.message?.includes('rate limit')) {
+      errorMessage = 'Too many requests, please try again later';
+    } else if (error.message?.includes('invalid url')) {
+      errorMessage = 'Invalid TikTok URL format';
+    }
+    
     return res.status(500).json({ 
-      error: 'Analysis failed',
-      message: error.message 
+      error: errorMessage,
+      details: error.message 
     });
   }
 }
 
-// 提取 TikTok 视频 ID
-function extractVideoId(url) {
-  // 支持多种 TikTok URL 格式
-  const patterns = [
-    /tiktok\.com\/@[\w.-]+\/video\/(\d+)/,  // 标准格式
-    /tiktok\.com\/v\/(\d+)/,                 // 短链接
-    /vm\.tiktok\.com\/(\w+)/,                // 移动端短链接
-    /vt\.tiktok\.com\/(\w+)/                 // 另一种短链接
-  ];
-
-  for (const pattern of patterns) {
-    const match = url.match(pattern);
-    if (match) {
-      return match[1];
-    }
-  }
-
-  return null;
-}
-
-// 获取 TikTok 视频数据
-async function getTikTokVideoData(videoId) {
-  try {
-    // 方法 1: 使用 RapidAPI 的 TikTok API
-    // 你需要在 https://rapidapi.com/ 注册并获取 API key
-    const options = {
-      method: 'GET',
-      url: 'https://tiktok-video-no-watermark2.p.rapidapi.com/detail',
-      params: { video_id: videoId },
-      headers: {
-        'X-RapidAPI-Key': process.env.RAPIDAPI_KEY, // 需要在 Vercel 环境变量中添加
-        'X-RapidAPI-Host': 'tiktok-video-no-watermark2.p.rapidapi.com'
-      }
-    };
-
-    const response = await axios.request(options);
-    const data = response.data;
-
-    if (data && data.data) {
-      const video = data.data;
-      return {
-        description: video.title || video.desc,
-        hashtags: video.textExtra ? video.textExtra.map(tag => tag.hashtagName) : [],
-        duration: video.duration,
-        viewCount: video.stats?.playCount || 0,
-        likeCount: video.stats?.diggCount || 0,
-        commentCount: video.stats?.commentCount || 0,
-        shareCount: video.stats?.shareCount || 0,
-        musicTitle: video.music?.title,
-        authorUsername: video.author?.uniqueId
-      };
-    }
-
-    // 方法 2: 备用方案 - 使用 TikTok 的 oEmbed API（有限的数据）
-    return await getTikTokOembedData(videoId);
-
-  } catch (error) {
-    console.error('Error fetching TikTok data:', error);
-    // 如果 RapidAPI 失败，尝试备用方案
-    return await getTikTokOembedData(videoId);
-  }
-}
-
-// 备用方案：使用 TikTok oEmbed API
-async function getTikTokOembedData(videoId) {
-  try {
-    const url = `https://www.tiktok.com/oembed?url=https://www.tiktok.com/@user/video/${videoId}`;
-    const response = await axios.get(url);
-    
-    if (response.data) {
-      return {
-        description: response.data.title,
-        hashtags: [],
-        duration: 0,
-        viewCount: 0,
-        likeCount: 0,
-        commentCount: 0,
-        shareCount: 0,
-        musicTitle: null,
-        authorUsername: response.data.author_name
-      };
-    }
-  } catch (error) {
-    console.error('oEmbed fallback failed:', error);
-  }
+// 计算互动率
+function calculateEngagementRate(stats) {
+  if (!stats.views || stats.views === 0) return 0;
   
-  return null;
+  const totalEngagements = stats.likes + stats.comments + stats.shares;
+  const rate = (totalEngagements / stats.views) * 100;
+  
+  return rate.toFixed(2);
 }
