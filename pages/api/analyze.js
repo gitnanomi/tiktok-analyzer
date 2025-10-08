@@ -5,16 +5,16 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { url, videoDescription, transcript } = req.body;
+  const { url } = req.body;
 
   if (!url || !url.includes('tiktok.com')) {
     return res.status(400).json({ error: 'Invalid TikTok URL' });
   }
 
   try {
-    console.log('Analyzing TikTok video:', url);
+    console.log('Researching viral video:', url);
     
-    // 获取视频基础信息
+    // 获取视频元数据
     let videoData = null;
     try {
       const oembedUrl = `https://www.tiktok.com/oembed?url=${encodeURIComponent(url)}`;
@@ -30,294 +30,203 @@ export default async function handler(req, res) {
       apiKey: process.env.OPENAI_API_KEY,
     });
 
-    // 构建详细的分析提示词
-    const analysisPrompt = `
-You are an expert TikTok replication analyst. Create a PRECISE, ACTIONABLE replication blueprint for this video.
+    // 市场调研专用分析提示词
+    const researchPrompt = `
+You are a viral TikTok content researcher following Steven's "Million Dollar App Playbook" methodology.
+
+Analyze this viral TikTok video for market research purposes:
 
 **Video URL:** ${url}
-**Video Title:** ${videoData?.title || 'N/A'}
+**Title/Description:** ${videoData?.title || 'N/A'}
 **Creator:** ${videoData?.author_name || 'Unknown'}
 
-${videoDescription ? `**Visual Description:** ${videoDescription}` : ''}
-${transcript ? `**Complete Transcript:** ${transcript}` : ''}
-
 ---
 
-# 🎬 COMPLETE VIDEO REPLICATION BLUEPRINT
+# VIRAL VIDEO ANALYSIS - Market Research Format
 
-## 1️⃣ HOOK ANALYSIS (0-3 seconds)
+Provide analysis in this EXACT structured format for easy spreadsheet entry:
 
-**Exact Opening:**
-${transcript ? `
-- Words spoken: "${transcript.split('\n')[0] || 'N/A'}"
-- Visual: ${videoDescription ? videoDescription.substring(0, 200) : 'Describe the exact first frame'}
-` : 'Analyze based on typical TikTok patterns'}
+## 1. HOOK (First 3 Seconds)
 
-**Hook Type:** [Question/Shock/Pattern Interrupt/Problem/Story]
+**Opening Line/Sound:**
+[Exact words spoken OR describe the sound/music]
+
+**Visual Hook:**
+[Describe exactly what you see: person's action, camera movement, setting, any props]
+Example: "Person walking toward camera", "Sitting in front of 6 glasses of water", "Close-up of frustrated face"
+
+**Hook Type:**
+[One of: Question | Shock Statement | Pattern Interrupt | Personal Story | Problem Statement | Visual Surprise]
 
 **Why It Works:**
-- Psychological trigger
-- Visual impact
-- Audio element
-- Text overlay strategy
+[1-2 sentences explaining the psychological trigger]
 
-**Your Replication:**
-Shot 1 (0:00-0:03):
-- Camera: [Exact position and angle]
-- You say: "[Exact words]"
-- You do: [Exact action]
-- Background: [What's visible]
-- Lighting: [Setup]
-
-**3 Alternative Hooks:**
-1. [Option 1 - exact words + visual]
-2. [Option 2 - exact words + visual]
-3. [Option 3 - exact words + visual]
+**Small Details That Matter:**
+[Note ANY small details that might contribute to virality: specific gestures, facial expressions, text overlays, background elements]
 
 ---
 
-## 2️⃣ SCENE-BY-SCENE BREAKDOWN
+## 2. STORYLINE / PAIN POINTS
 
-${transcript ? `
-Based on the transcript, break down into scenes:
+**Personal Story/Journey:**
+[How does the creator tell their story? What personal history do they share?]
+Example: "Creator shares their 10-year smoking journey"
 
-**Scene 1 (0-7 sec):**
-- Dialogue: [Extract from transcript]
-- Action: [What happens]
-- Camera work: [Angle, movement]
-- Props needed: [List]
+**Pain Points Described:**
+[List specific pain points or negative emotions mentioned]
+Example:
+- Feeling irritable without cigarettes
+- Lack of motivation
+- Physical symptoms (coughing, feeling terrible)
+- Emotional struggles (crying in bed)
 
-**Scene 2 (7-15 sec):**
-- Dialogue: [Extract from transcript]
-- Action: [What happens]
-- Camera work: [Angle, movement]
-- Props needed: [List]
+**Emotional Journey:**
+[Map the emotional arc: Where they started → struggles → turning point → where they are now]
 
-**Scene 3 (15-25 sec):**
-- Dialogue: [Extract from transcript]
-- Action: [What happens]
-- Camera work: [Angle, movement]
-- Props needed: [List]
-` : `
-Create a detailed scene breakdown based on typical structure:
-- Scene 1: Hook
-- Scene 2: Setup
-- Scene 3: Climax
-- Scene 4: CTA
-`}
+**Relatability Factor:**
+[What makes viewers say "that's me" or feel understood?]
+
+**Content Format:**
+[Tutorial | Story Time | Before/After | Day in Life | Problem-Solution | Comedy Skit | Educational]
 
 ---
 
-## 3️⃣ SHOT LIST (Production Ready)
+## 3. CALL TO ACTION / SOLUTION
 
-**SHOT 1 - Hook (0:00-0:03)**
-📹 Camera: [Front/Back] facing, [Distance] from subject
-📐 Angle: [Eye level/High/Low]
-🎬 Framing: [Close-up/Medium/Wide]
-💡 Lighting: [Natural/Ring light/Softbox]
-🎤 Audio: [On-camera mic/Lav/Voiceover]
-📝 Action: [Step-by-step what you do]
-💬 Line: "${transcript ? transcript.substring(0, 100) : '[Your opening line]'}"
+**The Solution Presented:**
+[What is the actual solution or recommendation?]
+Example: "Chewing gum", "Eating mints", "Reading this specific audiobook"
 
-**SHOT 2 - Setup (0:03-0:07)**
-📹 Camera: [Different angle]
-📐 Angle: [Change for variety]
-🎬 Framing: [Adjust composition]
-💡 Lighting: [Any changes]
-📝 Action: [Next action]
-💬 Line: "[Next dialogue]"
+**Is This An Ad?**
+[YES/NO - Even if it feels "super organic"]
 
-[Continue for all shots...]
+**Product/Service Mentioned:**
+[Specific product name, book title, app name, service, etc.]
 
----
+**How Solution Is Presented:**
+[Direct recommendation | Subtle mention | Product shown for 2 seconds | Link in bio | Organic integration]
 
-## 4️⃣ COMPLETE PRODUCTION CHECKLIST
+**CTA Type:**
+- [ ] Try this product/method
+- [ ] Follow for more tips
+- [ ] Comment your experience
+- [ ] Share with someone who needs this
+- [ ] Click link in bio
+- [ ] Join a community/challenge
+- [ ] No explicit CTA (just product presence)
 
-### 📦 Props & Wardrobe
-${videoDescription ? `Based on video description:
-- Item 1: [Specific prop]
-- Item 2: [Specific prop]
-- Clothing: [Exact description]
-- Accessories: [List all]
-` : `
-- [ ] Main props (list 3-5)
-- [ ] Wardrobe details
-- [ ] Accessories
-`}
+**CTA Placement:**
+[When does it appear? Beginning | Middle | End | Throughout]
 
-### 📍 Location Setup
-- Primary location: [Where to film]
-- Background: [What should be visible]
-- Space needed: [Dimensions]
-- Backup location: [Alternative]
-
-### 💡 Lighting Setup
-- Key light: [Position and type]
-- Fill light: [If needed]
-- Natural light: [Time of day]
-- Mood: [Bright/Moody/Natural]
-
-### 🎤 Audio Setup
-- Microphone: [Type]
-- Background music: [Source]
-- Sound effects: [List]
-- Voiceover: [If needed]
+**Why This CTA Works:**
+[Is it subtle? Does it provide value first? How is it non-salesy?]
 
 ---
 
-## 5️⃣ COMPLETE SCRIPT (Word-for-Word)
+## ADDITIONAL RESEARCH NOTES
 
-${transcript ? `
-**EXACT TRANSCRIPT:**
-${transcript}
+**Engagement Strategy:**
+[What makes people want to comment, share, or rewatch?]
 
-**YOUR VERSION (Modified for you):**
-[Provide a personalized version keeping the structure]
-` : `
-**ESTIMATED SCRIPT:**
-[Create based on typical patterns]
-`}
+**Hook Formula:**
+[Can you identify a repeatable pattern? E.g., "I quit [bad habit] by doing [surprising thing]"]
 
-**ON-SCREEN TEXT:**
-- 0:01 - "[Text 1]" (Position: [Top/Center/Bottom])
-- 0:05 - "[Text 2]" (Position: [Top/Center/Bottom])
-- 0:10 - "[Text 3]" (Position: [Top/Center/Bottom])
+**Content Gaps:**
+[What questions are left unanswered that could spark a series?]
 
----
+**Replication Potential:**
+[How easy would it be to adapt this format to your niche? Rate 1-10]
 
-## 6️⃣ EDITING TIMELINE
-
-**0:00-0:03** Hook
-- Cut 1: [Description]
-- Music: Starts at 0:00, [Song name]
-- Text: "[Text content]" fades in at 0:01
-- Effect: [Zoom in/Flash/None]
-
-**0:03-0:07** Setup
-- Cut 2: [Description]
-- Music: Beat drop at 0:05
-- Text: "[Text content]" appears at 0:06
-- Transition: [Swipe/Cut/Zoom]
-
-**0:07-0:15** Main Content
-- Cut 3-5: [Multiple cuts, fast paced]
-- Music: Maintains energy
-- Text: Key points overlaid
-- Effects: [Speed ramp/B-roll inserts]
-
-**0:15-0:25** Resolution/CTA
-- Cut 6: [Back to main shot]
-- Music: Outro/Fade
-- Text: "[CTA text]"
-- End screen: [Your logo/Follow button]
+**Key Takeaways For Your Content:**
+[3 specific things you can apply to your own videos]
+1. [Takeaway 1]
+2. [Takeaway 2]
+3. [Takeaway 3]
 
 ---
 
-## 7️⃣ FILMING SCHEDULE (Step-by-Step)
-
-**Day 1 - Preparation:**
-- [ ] Review this blueprint
-- [ ] Gather all props
-- [ ] Scout and prepare location
-- [ ] Test lighting setup
-- [ ] Memorize script/key lines
-
-**Day 2 - Production:**
-- [ ] 9:00 AM - Set up location
-- [ ] 9:30 AM - Film Shot 1 (5 takes)
-- [ ] 10:00 AM - Film Shot 2 (3 takes)
-- [ ] 10:30 AM - Film Shot 3-5
-- [ ] 11:00 AM - Film B-roll/cutaways
-- [ ] 11:30 AM - Review footage
-
-**Day 3 - Post-Production:**
-- [ ] Import footage to editing software
-- [ ] Rough cut following timeline above
-- [ ] Add music (download from TikTok/CapCut)
-- [ ] Add text overlays with exact timing
-- [ ] Color grade (match original)
-- [ ] Export: 1080x1920, 30fps
-
----
-
-## 8️⃣ PUBLISHING STRATEGY
-
-**Caption:**
-${videoData?.title || '"[Hook from video] + [value promise] + [CTA]"'}
-
-**Hashtags (Copy these exactly):**
-#fyp #foryou #viral #trending #tiktok [+ 10 niche-specific]
-
-**Post Time:**
-- Best: 7-9 AM / 12-1 PM / 7-9 PM (your timezone)
-- Day: Tuesday-Thursday for max reach
-
-**Cover Image:**
-- Select frame at 0:02 (right after hook)
-- Must show: Clear face + intriguing moment
-
----
-
-## 9️⃣ SUCCESS METRICS
-
-**Track These:**
-- First hour views (goal: 1,000+)
-- Watch time % (goal: 70%+)
-- Like rate (goal: 5%+)
-- Comment rate (goal: 1%+)
-- Share rate (goal: 0.3%+)
-
-**If underperforming:**
-- Try different hook (use alternatives from Section 1)
-- Post at different time
-- Adjust caption/hashtags
-- Boost engagement in first hour
-
----
-
-## 🎁 FINAL CHECKLIST
-
-Before you start filming:
-- [ ] I have watched the original video 10+ times
-- [ ] I understand WHY each element works
-- [ ] I have all props and equipment ready
-- [ ] I have memorized the script/key points
-- [ ] I have tested my filming location
-- [ ] I know my unique angle/twist
-- [ ] I'm ready to create!
-
-**🚀 GO CREATE YOUR VERSION NOW!**
+IMPORTANT: Be specific and detailed. The goal is to understand WHY this video went viral so we can learn from it, NOT to copy it directly.
 `;
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-4",  // 使用 GPT-4 获得更好的分析
+      model: "gpt-4",
       messages: [
         {
           role: "system",
-          content: "You are a professional TikTok replication expert. Create extremely detailed, shot-by-shot blueprints that anyone can follow to recreate viral videos. Be specific about every detail: camera angles, exact words, props, timing, editing. Make it actionable and precise."
+          content: "You are a viral content researcher analyzing TikTok videos for market research. Focus on extracting actionable insights about hooks, pain points, and CTAs. Be specific and detail-oriented. This data will be used to build a content strategy spreadsheet."
         },
         {
           role: "user",
-          content: analysisPrompt
+          content: researchPrompt
         }
       ],
       temperature: 0.7,
-      max_tokens: 4000,
+      max_tokens: 2000,
     });
+
+    const analysis = completion.choices[0].message.content;
+
+    // 解析分析结果为结构化数据
+    const structuredData = parseAnalysisToStructured(analysis, url, videoData);
 
     return res.status(200).json({
       success: true,
       url: url,
       videoData: videoData,
-      analysis: completion.choices[0].message.content,
+      analysis: analysis,
+      structured: structuredData,
       timestamp: new Date().toISOString()
     });
 
   } catch (error) {
-    console.error('Analysis error:', error);
+    console.error('Research error:', error);
     return res.status(500).json({ 
       error: 'Analysis failed',
       message: error.message 
     });
   }
+}
+
+// 解析分析文本为结构化数据（用于导出CSV）
+function parseAnalysisToStructured(analysis, url, videoData) {
+  // 提取关键信息
+  const hookMatch = analysis.match(/\*\*Opening Line\/Sound:\*\*\s*\n(.+)/);
+  const painPointsMatch = analysis.match(/\*\*Pain Points Described:\*\*\s*\n([\s\S]+?)\n\n/);
+  const solutionMatch = analysis.match(/\*\*The Solution Presented:\*\*\s*\n(.+)/);
+  const isAdMatch = analysis.match(/\*\*Is This An Ad\?\*\*\s*\n(.+)/);
+  
+  return {
+    url: url,
+    title: videoData?.title || '',
+    creator: videoData?.author_name || '',
+    date_analyzed: new Date().toISOString().split('T')[0],
+    
+    // Hook分析
+    hook_opening: hookMatch ? hookMatch[1].trim() : '',
+    hook_visual: extractSection(analysis, 'Visual Hook:'),
+    hook_type: extractSection(analysis, 'Hook Type:'),
+    hook_why_works: extractSection(analysis, 'Why It Works:'),
+    
+    // Storyline/Pain Points
+    storyline: extractSection(analysis, 'Personal Story/Journey:'),
+    pain_points: painPointsMatch ? painPointsMatch[1].trim() : '',
+    emotional_journey: extractSection(analysis, 'Emotional Journey:'),
+    content_format: extractSection(analysis, 'Content Format:'),
+    
+    // CTA/Solution
+    solution: solutionMatch ? solutionMatch[1].trim() : '',
+    is_ad: isAdMatch ? isAdMatch[1].trim() : '',
+    product_mentioned: extractSection(analysis, 'Product/Service Mentioned:'),
+    cta_type: extractSection(analysis, 'How Solution Is Presented:'),
+    
+    // Additional notes
+    key_takeaways: extractSection(analysis, 'Key Takeaways For Your Content:'),
+    replication_potential: extractSection(analysis, 'Replication Potential:')
+  };
+}
+
+function extractSection(text, sectionName) {
+  const regex = new RegExp(`\\*\\*${sectionName}\\*\\*\\s*\\n(.+?)(?=\\n\\n|\\*\\*|$)`, 's');
+  const match = text.match(regex);
+  return match ? match[1].trim() : '';
 }
