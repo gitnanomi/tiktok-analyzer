@@ -1,3 +1,4 @@
+// pages/api/analyze.js - 改进版
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import axios from 'axios';
 
@@ -6,15 +7,17 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { input, count = 20 } = req.body;
+  const { input } = req.body;
+
+  if (!input) {
+    return res.status(400).json({ error: 'Input required' });
+  }
 
   try {
-    // 🎯 智能识别输入类型
     const isTikTokURL = input.includes('tiktok.com');
     
     if (isTikTokURL) {
-      // 场景1: 单URL分析
-      console.log('🔗 Single URL Analysis Mode');
+      // 单URL分析
       const result = await analyzeSingleVideo(input);
       return res.status(200).json({
         success: true,
@@ -22,329 +25,164 @@ export default async function handler(req, res) {
         results: [result]
       });
     } else {
-      // 场景2: 批量关键词搜索
-      console.log('📊 Batch Analysis Mode');
-      const results = await analyzeBatchVideos(input, count);
+      // 批量搜索
+      const results = await analyzeBatchVideos(input);
+      
+      if (!results || results.length === 0) {
+        // 返回友好的提示信息
+        return res.status(200).json({
+          success: true,
+          mode: 'batch',
+          demo: true,
+          message: 'Using demo data. To enable real search, add APIFY_API_KEY to your .env.local',
+          results: getDemoResults(input)
+        });
+      }
+      
       return res.status(200).json({
         success: true,
         mode: 'batch',
-        total: results.length,
         results: results
       });
     }
-
   } catch (error) {
-    console.error('❌ Analysis error:', error);
+    console.error('API Error:', error);
     return res.status(500).json({ 
-      error: 'Analysis failed',
-      message: error.message
+      error: error.message,
+      tip: 'Check your API keys in .env.local'
     });
   }
 }
 
-// ============================================
-// 单个URL分析
-// ============================================
+// 单个视频分析
 async function analyzeSingleVideo(url) {
-  console.log('🔍 Step 1: Fetching video metadata...');
-  
-  // 获取元数据
-  const metadata = await fetchVideoMetadata(url);
-  
-  // 尝试获取视频URL
-  let videoUrl = null;
   try {
-    videoUrl = await getVideoDownloadUrl(url);
-  } catch (error) {
-    console.log('⚠️ Could not get video URL, will use metadata only');
-  }
-
-  console.log('🤖 Step 2: Analyzing with Gemini...');
-  
-  // 如果有视频URL，使用视频分析；否则用文本分析
-  const analysis = videoUrl 
-    ? await analyzeVideoWithGemini({ ...metadata, videoUrl })
-    : await analyzeTextWithGemini(metadata);
-
-  return {
-    url: url,
-    ...metadata,
-    analysis: analysis,
-    analyzedAt: new Date().toISOString()
-  };
-}
-
-// ============================================
-// 批量关键词分析
-// ============================================
-async function analyzeBatchVideos(keywords, maxCount) {
-  console.log(`🔍 Step 1: Searching TikTok for "${keywords}"...`);
-  
-  // 使用Apify搜索
-  const videos = await searchTikTokVideos(keywords, maxCount);
-  
-  if (!videos || videos.length === 0) {
-    throw new Error('No videos found');
-  }
-
-  console.log(`✅ Found ${videos.length} videos`);
-  console.log('🎬 Step 2: Analyzing videos...');
-
-  // 批量分析（限制前5个以节省时间/成本）
-  const results = [];
-  const analyzeCount = Math.min(videos.length, 5);
-  
-  for (let i = 0; i < analyzeCount; i++) {
-    const video = videos[i];
-    console.log(`  Processing ${i + 1}/${analyzeCount}: ${video.id}`);
-    
-    try {
-      const analysis = await analyzeVideoWithGemini(video);
-      results.push({
-        ...video,
-        analysis,
-        analyzedAt: new Date().toISOString()
-      });
-      
-      // 避免rate limit
-      await new Promise(resolve => setTimeout(resolve, 2000));
-    } catch (error) {
-      console.error(`  ❌ Failed: ${error.message}`);
-      results.push({
-        ...video,
-        analysis: {
-          error: 'Analysis failed',
-          message: error.message
-        }
-      });
-    }
-  }
-
-  console.log('✅ Batch analysis complete!');
-  return results;
-}
-
-// ============================================
-// 核心功能：Gemini视频分析
-// ============================================
-async function analyzeVideoWithGemini(video) {
-  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-  const model = genAI.getGenerativeModel({ 
-    model: "gemini-2.0-flash-exp" 
-  });
-
-  try {
-    // Step 1: 下载视频
-    console.log('    📥 Downloading video...');
-    const videoResponse = await axios.get(video.videoUrl, {
-      responseType: 'arraybuffer',
-      timeout: 30000,
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-      }
-    });
-
-    // Step 2: 上传到Gemini Files API
-    console.log('    ☁️ Uploading to Gemini...');
-    const uploadResult = await uploadVideoToGemini(
-      videoResponse.data, 
-      video.id || 'video'
-    );
-
-    // Step 3: 等待处理
-    console.log('    ⏳ Waiting for processing...');
-    await new Promise(resolve => setTimeout(resolve, 10000));
-
-    // Step 4: AI分析
-    console.log('    🤖 Analyzing...');
-    const prompt = createAnalysisPrompt(video);
-
-    const result = await model.generateContent([
-      {
-        fileData: {
-          mimeType: "video/mp4",
-          fileUri: uploadResult.file.uri
-        }
-      },
-      { text: prompt }
-    ]);
-
-    const analysisText = result.response.text();
-    return parseGeminiResponse(analysisText);
-
-  } catch (error) {
-    console.error('    ❌ Gemini analysis failed:', error.message);
-    
-    // 降级：如果视频分析失败，尝试文本分析
-    console.log('    🔄 Falling back to text analysis...');
-    return await analyzeTextWithGemini(video);
-  }
-}
-
-// ============================================
-// 降级方案：纯文本分析
-// ============================================
-async function analyzeTextWithGemini(video) {
-  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-  const model = genAI.getGenerativeModel({ 
-    model: "gemini-1.5-flash" 
-  });
-
-  const prompt = createAnalysisPrompt(video);
-  const result = await model.generateContent(prompt);
-  
-  return parseGeminiResponse(result.response.text());
-}
-
-// ============================================
-// 辅助函数
-// ============================================
-
-// 搜索TikTok视频（Apify）
-async function searchTikTokVideos(keywords, maxItems) {
-  try {
-    const response = await axios.post(
-      'https://api.apify.com/v2/acts/clockworks~free-tiktok-scraper/run-sync-get-dataset-items',
-      {
-        hashtags: [keywords],
-        resultsPerPage: maxItems,
-        shouldDownloadVideos: false,
-        shouldDownloadCovers: false
-      },
-      {
-        params: {
-          token: process.env.APIFY_API_KEY
-        },
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        timeout: 120000
-      }
-    );
-
-    return response.data.map(item => ({
-      id: item.id,
-      url: item.webVideoUrl,
-      videoUrl: item.videoUrl,
-      author: item.authorMeta?.name,
-      description: item.text,
-      views: item.playCount,
-      likes: item.diggCount,
-      comments: item.commentCount,
-      shares: item.shareCount,
-      hashtags: item.hashtags?.map(h => h.name),
-      musicTitle: item.musicMeta?.musicName,
-      duration: item.videoMeta?.duration,
-      createdAt: item.createTime
-    }));
-  } catch (error) {
-    // 如果Apify失败，返回空数组
-    console.error('Apify error:', error.message);
-    return [];
-  }
-}
-
-// 获取视频元数据（oEmbed）
-async function fetchVideoMetadata(url) {
-  try {
-    const oembedUrl = `https://www.tiktok.com/oembed?url=${encodeURIComponent(url)}`;
-    const response = await axios.get(oembedUrl, { timeout: 10000 });
+    console.log('Analyzing single video:', url);
+    const metadata = await fetchMetadata(url);
+    const analysis = await analyzeWithGemini(metadata);
     
     return {
-      title: response.data.title,
-      author: response.data.author_name,
-      thumbnail: response.data.thumbnail_url,
-      description: response.data.title
+      url: url,
+      ...metadata,
+      analysis: analysis,
+      analyzedAt: new Date().toISOString()
     };
   } catch (error) {
+    console.error('Single video analysis failed:', error);
+    throw new Error('Unable to analyze video: ' + error.message);
+  }
+}
+
+// 批量视频分析
+async function analyzeBatchVideos(keywords) {
+  console.log('Batch search for:', keywords);
+  
+  // 检查是否有 Apify API Key
+  if (!process.env.APIFY_API_KEY) {
+    console.log('No APIFY_API_KEY found, using demo data');
+    return getDemoResults(keywords);
+  }
+  
+  try {
+    const videos = await searchWithApify(keywords);
+    
+    if (!videos || videos.length === 0) {
+      console.log('No videos found from Apify, using demo data');
+      return getDemoResults(keywords);
+    }
+    
+    console.log(`Found ${videos.length} videos, analyzing...`);
+    const results = [];
+    
+    // 只分析前5个
+    for (let i = 0; i < Math.min(videos.length, 5); i++) {
+      try {
+        const analysis = await analyzeWithGemini(videos[i]);
+        results.push({
+          ...videos[i],
+          analysis,
+          analyzedAt: new Date().toISOString()
+        });
+      } catch (error) {
+        console.error(`Failed to analyze video ${i}:`, error);
+      }
+    }
+    
+    return results.length > 0 ? results : getDemoResults(keywords);
+    
+  } catch (error) {
+    console.error('Batch analysis error:', error);
+    return getDemoResults(keywords);
+  }
+}
+
+// 获取元数据
+async function fetchMetadata(url) {
+  try {
+    const oembed = `https://www.tiktok.com/oembed?url=${encodeURIComponent(url)}`;
+    const res = await axios.get(oembed, { 
+      timeout: 10000,
+      headers: {
+        'User-Agent': 'Mozilla/5.0'
+      }
+    });
+    
     return {
-      title: 'Unable to fetch',
+      title: res.data.title || 'No title',
+      author: res.data.author_name || 'Unknown',
+      description: res.data.title,
+      thumbnail: res.data.thumbnail_url
+    };
+  } catch (error) {
+    console.error('Metadata fetch failed:', error);
+    return {
+      title: 'Unable to fetch metadata',
       author: 'Unknown',
-      description: 'Metadata unavailable'
+      description: 'Could not retrieve video information'
     };
   }
 }
 
-// 获取视频下载URL
-async function getVideoDownloadUrl(url) {
-  // 这里可以使用各种TikTok下载API
-  // 示例：使用第三方服务或直接解析
-  try {
-    const response = await axios.get(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-      }
-    });
-    
-    // 从HTML中提取视频URL
-    const videoUrlMatch = response.data.match(/"downloadAddr":"([^"]+)"/);
-    if (videoUrlMatch) {
-      return videoUrlMatch[1].replace(/\\u002F/g, '/');
-    }
-    
-    throw new Error('Could not extract video URL');
-  } catch (error) {
-    throw new Error('Failed to get video download URL');
+// Gemini 分析
+async function analyzeWithGemini(video) {
+  if (!process.env.GEMINI_API_KEY) {
+    console.log('No GEMINI_API_KEY found, using basic analysis');
+    return getBasicAnalysis(video);
   }
-}
 
-// 上传视频到Gemini
-async function uploadVideoToGemini(videoBuffer, videoId) {
-  const FormData = require('form-data');
-  const form = new FormData();
-  
-  form.append('file', videoBuffer, {
-    filename: `${videoId}.mp4`,
-    contentType: 'video/mp4'
-  });
+  try {
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-  const response = await axios.post(
-    'https://generativelanguage.googleapis.com/upload/v1beta/files',
-    form,
-    {
-      params: {
-        key: process.env.GEMINI_API_KEY
-      },
-      headers: {
-        ...form.getHeaders()
-      },
-      timeout: 60000
-    }
-  );
+    const prompt = `Analyze this TikTok video:
+Title: ${video.title || video.description}
+Author: @${video.author}
 
-  return response.data;
-}
-
-// 创建分析Prompt
-function createAnalysisPrompt(video) {
-  return `Analyze this TikTok video in detail:
-
-VIDEO METADATA:
-- Description: "${video.description || video.title}"
-- Author: @${video.author}
-${video.views ? `- Views: ${video.views.toLocaleString()}` : ''}
-${video.likes ? `- Likes: ${video.likes.toLocaleString()}` : ''}
-${video.hashtags ? `- Hashtags: ${video.hashtags.join(', ')}` : ''}
-
-Return analysis in this EXACT format:
-
+Return analysis in this format:
 ContentType: [UGC_faceless/UGC_with_face/professional]
-Category: [Tutorial/Review/Challenge/Vlog/Entertainment/Educational/Other]
+Category: [Tutorial/Review/Challenge/Vlog/Entertainment/Educational]
 Hook: [First 3 seconds analysis]
-VisualHook: [Visual elements that attract viewers]
-Transcript: [Complete voiceover or "No voiceover"]
+VisualHook: [Visual elements]
+Transcript: [Inferred content or "No voiceover"]
 Captions: [Text overlays or "No text"]
 AudioType: [Human narration/Background music/Silent]
 CTA: [Call-to-action or "None"]
-Tone: [High-Energy/Funny/Educational/Calming/Inspirational/etc]
+Tone: [High-Energy/Funny/Educational/Calming/Inspirational]
 IsAd: [YES/NO]
-Analysis: [Key success factors - be specific and detailed]
+Analysis: [Detailed success factors]`;
 
-Be precise and base analysis on what you actually see/hear in the video.`;
+    const result = await model.generateContent(prompt);
+    const text = result.response.text();
+    
+    return parseAnalysis(text);
+  } catch (error) {
+    console.error('Gemini analysis error:', error);
+    return getBasicAnalysis(video);
+  }
 }
 
-// 解析Gemini返回结果
-function parseGeminiResponse(text) {
+// 解析分析结果
+function parseAnalysis(text) {
   const extract = (field) => {
     const regex = new RegExp(`${field}:\\s*(.+?)(?:\\n|$)`, 'i');
     const match = text.match(regex);
@@ -365,4 +203,166 @@ function parseGeminiResponse(text) {
     analysis: extract('Analysis'),
     fullText: text
   };
+}
+
+// 基础分析（无 API Key）
+function getBasicAnalysis(video) {
+  return {
+    contentType: 'Unknown',
+    category: 'Unknown',
+    hook: `Based on: "${video.title || video.description}"`,
+    visualHook: 'Add GEMINI_API_KEY for full analysis',
+    transcript: 'AI analysis requires GEMINI_API_KEY',
+    captions: 'Unknown',
+    audioType: 'Unknown',
+    cta: 'Unknown',
+    tone: 'Unknown',
+    isAd: 'Unknown',
+    analysis: `📋 Basic metadata only
+
+Title: ${video.title}
+Author: @${video.author}
+
+🔑 To unlock full AI analysis:
+1. Add GEMINI_API_KEY to .env.local
+2. Get free key at: https://aistudio.google.com/app/apikey
+
+💡 Current capabilities:
+✅ Video metadata extraction
+✅ Basic information display
+❌ AI content analysis (requires API key)`
+  };
+}
+
+// Apify 搜索
+async function searchWithApify(keywords) {
+  try {
+    console.log('Calling Apify API...');
+    
+    const response = await axios.post(
+      'https://api.apify.com/v2/acts/clockworks~free-tiktok-scraper/run-sync-get-dataset-items',
+      {
+        hashtags: [keywords],
+        resultsPerPage: 20,
+        shouldDownloadVideos: false,
+        shouldDownloadCovers: false
+      },
+      {
+        params: { 
+          token: process.env.APIFY_API_KEY 
+        },
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        timeout: 120000
+      }
+    );
+
+    if (!response.data || response.data.length === 0) {
+      console.log('Apify returned empty results');
+      return null;
+    }
+
+    console.log(`Apify returned ${response.data.length} videos`);
+    
+    return response.data.map(item => ({
+      id: item.id,
+      url: item.webVideoUrl,
+      author: item.authorMeta?.name || 'Unknown',
+      description: item.text || 'No description',
+      title: item.text || 'No title',
+      views: item.playCount || 0,
+      likes: item.diggCount || 0,
+      comments: item.commentCount || 0,
+      shares: item.shareCount || 0
+    }));
+    
+  } catch (error) {
+    console.error('Apify API error:', error.message);
+    return null;
+  }
+}
+
+// 演示数据
+function getDemoResults(keywords) {
+  return [
+    {
+      id: 'demo1',
+      url: 'https://tiktok.com/@demo/video/1',
+      author: 'demo_creator_1',
+      description: `Demo video about ${keywords}`,
+      title: `Demo: ${keywords} tutorial`,
+      views: 125000,
+      likes: 9800,
+      comments: 340,
+      shares: 180,
+      analysis: {
+        contentType: 'UGC_with_face',
+        category: 'Tutorial',
+        hook: 'Attention-grabbing question in first 3 seconds',
+        visualHook: 'Close-up face shot with bold text overlay',
+        transcript: 'Demo mode - Add APIFY_API_KEY to analyze real videos',
+        captions: 'Text overlays with key points',
+        audioType: 'Human narration',
+        cta: 'Link in bio',
+        tone: 'Educational',
+        isAd: 'NO',
+        analysis: `🎯 Demo Analysis
+
+This is sample data. To analyze real TikTok videos:
+
+1. Add APIFY_API_KEY to .env.local
+   Get key at: https://console.apify.com/account/integrations
+
+2. Add GEMINI_API_KEY for AI analysis
+   Get key at: https://aistudio.google.com/app/apikey
+
+💡 Current Status:
+✅ UI Working
+✅ Single URL analysis (with metadata)
+❌ Batch search (needs APIFY_API_KEY)
+❌ AI analysis (needs GEMINI_API_KEY)`
+      }
+    },
+    {
+      id: 'demo2',
+      url: 'https://tiktok.com/@demo/video/2',
+      author: 'demo_creator_2',
+      description: `Another demo about ${keywords}`,
+      title: `${keywords} - Product showcase`,
+      views: 87000,
+      likes: 6500,
+      comments: 220,
+      shares: 95,
+      analysis: {
+        contentType: 'UGC_faceless',
+        category: 'Review',
+        hook: 'Product reveal with dynamic transition',
+        visualHook: 'Fast cuts and product close-ups',
+        transcript: 'Demo transcript - upgrade for real analysis',
+        captions: 'Multiple animated text overlays',
+        audioType: 'Background music with voiceover',
+        cta: 'Check link in bio',
+        tone: 'High-Energy',
+        isAd: 'YES',
+        analysis: `📊 Demo Analysis #2
+
+This is demonstration data showing what you'll get with full API access.
+
+🔑 Next Steps:
+1. Get APIFY API key (for batch search)
+2. Get GEMINI API key (for AI analysis)
+3. Add both to .env.local
+4. Restart server
+
+Then you'll see real video analysis instead of demos!`
+      }
+    }
+  ];
+}
+
+export const config = {
+  api: {
+    responseLimit: false,
+  },
 }
