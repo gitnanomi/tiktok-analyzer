@@ -340,11 +340,11 @@ export default function Home() {
                       </div>
 
                       {/* Video Link */}
-                      {result.url && (
-                        <div className="border-t border-gray-200 pt-6">
-                          
-                            href={result.url}
-                            target="_blank"
+                   {result.url && (
+  <div className="border-t border-gray-200 pt-6">
+    <a                        
+      href={result.url}
+      target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition font-medium"
                           >
