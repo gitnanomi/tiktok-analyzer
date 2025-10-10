@@ -49,7 +49,7 @@ export default function Home() {
 
     const headers = [
       'Author', 'Description', 'Views', 'Likes', 
-      'Content Type', 'Category', 'Hook', 'Is Ad?', 'Why It Works'
+      'Content Type', 'Category', 'Hook', 'Is Ad?', 'Success Factors'
     ];
     
     const rows = results.map(r => [
@@ -61,7 +61,7 @@ export default function Home() {
       r.analysis?.category || '',
       `"${(r.analysis?.hook || '').replace(/"/g, '""')}"`,
       r.analysis?.isAd || '',
-      `"${(r.analysis?.whyItWorks || '').replace(/"/g, '""')}"`,
+      `"${(r.analysis?.successFactors || '').replace(/"/g, '""')}"`,
     ]);
 
     const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
@@ -72,12 +72,10 @@ export default function Home() {
     link.click();
   };
 
-  const inputType = input.includes('tiktok.com') ? 'url' : 'keywords';
-
   return (
     <>
       <Head>
-        <title>TikTok Growth Lab - Viral Content Analysis</title>
+        <title>TikTok Analyzer - Viral Content Analysis</title>
       </Head>
 
       <div className="min-h-screen bg-gray-50">
@@ -88,10 +86,10 @@ export default function Home() {
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-3xl font-bold text-gray-900">
-                  TikTok Growth Lab
+                  TikTok Analyzer
                 </h1>
                 <p className="text-gray-600 mt-1">
-                  Reverse-engineer viral content • Get AI recreation prompts • Scale your content strategy
+                  Reverse-engineer viral content • AI recreation prompts • Content strategy insights
                 </p>
               </div>
               {results.length > 0 && (
@@ -128,16 +126,6 @@ export default function Home() {
               </button>
             </div>
             
-            {input && (
-              <div className="mt-3 text-sm text-gray-600">
-                {inputType === 'url' ? (
-                  <span>✓ Single video analysis mode</span>
-                ) : (
-                  <span>✓ Batch search mode - will analyze top videos</span>
-                )}
-              </div>
-            )}
-            
             {error && (
               <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
                 {error}
@@ -148,43 +136,17 @@ export default function Home() {
           {/* Results */}
           {results.length > 0 && (
             <div className="space-y-8">
-              
-              {/* Results Header */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg px-6 py-4">
-                <div className="flex items-center justify-between">
-                  <div className="text-blue-900 font-medium">
-                    {mode === 'single' ? (
-                      <span>✓ Video analysis complete</span>
-                    ) : (
-                      <span>✓ Analyzed {results.length} videos</span>
-                    )}
-                  </div>
-                  <div className="flex gap-4 text-sm">
-                    <span className="text-blue-700">
-                      {results.filter(r => r.analysis?.isAd?.toLowerCase().includes('yes')).length} sponsored
-                    </span>
-                  </div>
-                </div>
-              </div>
-
               {results.map((result, idx) => (
                 <div key={idx} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                   
                   {/* Video Header */}
                   <div className="border-b border-gray-200 bg-gray-50 px-6 py-4">
                     <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3">
-                          <h2 className="text-xl font-bold text-gray-900">
-                            @{result.author}
-                          </h2>
-                          {result.views && (
-                            <span className="text-sm text-gray-500">
-                              {(result.views / 1000000).toFixed(1)}M views
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-gray-600 mt-2">{result.description}</p>
+                      <div>
+                        <h2 className="text-xl font-bold text-gray-900">
+                          @{result.author}
+                        </h2>
+                        <p className="text-gray-600 mt-1">{result.description}</p>
                       </div>
                       {result.analysis?.isAd?.toLowerCase().includes('yes') && (
                         <span className="px-3 py-1 bg-yellow-100 text-yellow-800 text-sm font-medium rounded-full">
@@ -201,9 +163,8 @@ export default function Home() {
                       {/* Hook */}
                       {result.analysis.hook && (
                         <div>
-                          <h3 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
-                            <span className="text-2xl">🎣</span>
-                            Hook Breakdown
+                          <h3 className="text-lg font-bold text-gray-900 mb-3">
+                            🎣 Hook (First 3 Seconds)
                           </h3>
                           <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-r">
                             <p className="text-gray-800 leading-relaxed whitespace-pre-line">
@@ -213,16 +174,15 @@ export default function Home() {
                         </div>
                       )}
 
-                      {/* Story */}
-                      {result.analysis.story && (
+                      {/* Story Line */}
+                      {result.analysis.storyLine && (
                         <div>
-                          <h3 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
-                            <span className="text-2xl">📖</span>
-                            The Story
+                          <h3 className="text-lg font-bold text-gray-900 mb-3">
+                            📖 Story Line
                           </h3>
                           <div className="bg-purple-50 border-l-4 border-purple-500 p-4 rounded-r">
                             <p className="text-gray-800 leading-relaxed whitespace-pre-line">
-                              {result.analysis.story}
+                              {result.analysis.storyLine}
                             </p>
                           </div>
                         </div>
@@ -231,9 +191,8 @@ export default function Home() {
                       {/* CTA */}
                       {result.analysis.cta && (
                         <div>
-                          <h3 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
-                            <span className="text-2xl">👉</span>
-                            The Ask
+                          <h3 className="text-lg font-bold text-gray-900 mb-3">
+                            👉 Call to Action (CTA)
                           </h3>
                           <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded-r">
                             <p className="text-gray-800 leading-relaxed whitespace-pre-line">
@@ -243,31 +202,29 @@ export default function Home() {
                         </div>
                       )}
 
-                      {/* Visuals */}
-                      {result.analysis.visuals && (
+                      {/* Visual Elements */}
+                      {result.analysis.visualElements && (
                         <div>
-                          <h3 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
-                            <span className="text-2xl">🎥</span>
-                            Visual Strategy
+                          <h3 className="text-lg font-bold text-gray-900 mb-3">
+                            🎥 Visual Elements
                           </h3>
                           <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r">
                             <p className="text-gray-800 leading-relaxed whitespace-pre-line">
-                              {result.analysis.visuals}
+                              {result.analysis.visualElements}
                             </p>
                           </div>
                         </div>
                       )}
 
-                      {/* Why It Works */}
-                      {result.analysis.whyItWorks && (
+                      {/* Success Factors */}
+                      {result.analysis.successFactors && (
                         <div>
-                          <h3 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
-                            <span className="text-2xl">🔥</span>
-                            Why This Works
+                          <h3 className="text-lg font-bold text-gray-900 mb-3">
+                            🔥 Success Factors
                           </h3>
                           <div className="bg-orange-50 border-l-4 border-orange-500 p-4 rounded-r">
                             <p className="text-gray-800 leading-relaxed whitespace-pre-line">
-                              {result.analysis.whyItWorks}
+                              {result.analysis.successFactors}
                             </p>
                           </div>
                         </div>
@@ -276,9 +233,8 @@ export default function Home() {
                       {/* AI Prompts */}
                       {result.analysis.aiPrompts && (result.analysis.aiPrompts.midjourney || result.analysis.aiPrompts.stableDiffusion) && (
                         <div className="border-t border-gray-200 pt-6">
-                          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                            <span className="text-2xl">🤖</span>
-                            AI Recreation Kit
+                          <h3 className="text-lg font-bold text-gray-900 mb-4">
+                            🤖 AI Prompt Engineering
                           </h3>
                           
                           <div className="space-y-4">
@@ -287,7 +243,7 @@ export default function Home() {
                             {result.analysis.aiPrompts.midjourney && (
                               <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-5 rounded-lg border border-purple-200">
                                 <div className="flex items-center justify-between mb-3">
-                                  <span className="font-semibold text-gray-900">Midjourney Prompt</span>
+                                  <span className="font-semibold text-gray-900">Midjourney/DALL-E Prompt</span>
                                   <button
                                     onClick={() => copyToClipboard(result.analysis.aiPrompts.midjourney)}
                                     className="text-sm px-4 py-1.5 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition font-medium"
@@ -345,16 +301,15 @@ export default function Home() {
                         </div>
                       )}
 
-                      {/* Quick Wins */}
-                      {result.analysis.quickWins && (
+                      {/* Replicable Elements */}
+                      {result.analysis.replicableElements && (
                         <div className="border-t border-gray-200 pt-6">
-                          <h3 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
-                            <span className="text-2xl">⚡</span>
-                            Quick Wins
+                          <h3 className="text-lg font-bold text-gray-900 mb-3">
+                            ⚡ Replicable Elements
                           </h3>
                           <div className="bg-green-50 border border-green-200 p-4 rounded-lg">
                             <p className="text-gray-800 leading-relaxed whitespace-pre-line">
-                              {result.analysis.quickWins}
+                              {result.analysis.replicableElements}
                             </p>
                           </div>
                         </div>
@@ -413,25 +368,9 @@ export default function Home() {
               <h2 className="text-3xl font-bold text-gray-900 mb-3">
                 Analyze Any TikTok Video
               </h2>
-              <p className="text-gray-600 text-lg max-w-2xl mx-auto mb-8">
-                Paste a video URL to get marketing insights, hook breakdowns, and AI prompts to recreate the look.
+              <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+                Paste a video URL to get hook analysis, CTA breakdown, and AI prompts for content recreation.
               </p>
-              <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto text-left">
-                <div className="bg-blue-50 border border-blue-200 p-6 rounded-lg">
-                  <div className="text-3xl mb-3">🔗</div>
-                  <h3 className="font-bold text-lg text-gray-900 mb-2">Single Video</h3>
-                  <p className="text-gray-600 text-sm">
-                    Deep dive into what makes one video work. Get hook analysis, visual breakdown, and AI recreation prompts.
-                  </p>
-                </div>
-                <div className="bg-purple-50 border border-purple-200 p-6 rounded-lg">
-                  <div className="text-3xl mb-3">🔍</div>
-                  <h3 className="font-bold text-lg text-gray-900 mb-2">Batch Search</h3>
-                  <p className="text-gray-600 text-sm">
-                    Enter keywords to analyze multiple videos. Perfect for competitor research and trend spotting.
-                  </p>
-                </div>
-              </div>
             </div>
           )}
 
@@ -442,13 +381,6 @@ export default function Home() {
               <p className="text-gray-600 text-lg">Analyzing video...</p>
             </div>
           )}
-        </div>
-
-        {/* Footer */}
-        <div className="border-t border-gray-200 mt-16 py-8">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-sm text-gray-500">
-            <p>TikTok Growth Lab • AI-powered content analysis for marketers</p>
-          </div>
         </div>
       </div>
     </>
