@@ -349,11 +349,11 @@ export default function Home() {
                         </div>
                       </div>
 
-                      {result.url && (
-                        <div className="border-t-2 border-gray-200 pt-6">
-                          
-                            href={result.url}
-                            target="_blank"
+                   {result.url && (
+  <div className="border-t border-gray-200 pt-6">
+    <a                              
+      href={result.url}
+      target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:shadow-2xl transition-all transform hover:scale-105 font-bold text-lg"
                           >
