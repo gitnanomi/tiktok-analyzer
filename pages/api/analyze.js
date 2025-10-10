@@ -1,4 +1,11 @@
-// pages/api/analyze.js - 完整修复版
+export default async function handler(req, res) {
+  // 🔍 调试代码 - 添加在最前面
+  console.log('=== 环境变量调试 ===');
+  console.log('GEMINI_API_KEY 存在?', !!process.env.GEMINI_API_KEY);
+  console.log('GEMINI_API_KEY 长度:', process.env.GEMINI_API_KEY?.length);
+  console.log('GEMINI_API_KEY 前15个字符:', process.env.GEMINI_API_KEY?.substring(0, 15));
+  console.log('==================');
+  
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import axios from 'axios';
 
