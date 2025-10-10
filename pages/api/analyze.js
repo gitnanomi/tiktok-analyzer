@@ -138,60 +138,57 @@ async function analyzeWithGemini(video) {
   try {
     console.log('Calling Gemini API...');
     
-    const prompt = `Act as a sharp, experienced TikTok growth strategist who's scaled multiple accounts to 1M+ followers. Analyze this video like you're briefing a client's marketing team.
+    const prompt = `You're a TikTok growth strategist analyzing viral content. Write like you're briefing a marketing team - direct, insightful, no fluff.
 
 Video: "${video.title || video.description}" by @${video.author}
 
-Write your analysis in a DIRECT, conversational style. No fluff. Talk like a real marketer in a strategy meeting.
+Analyze using EXACTLY these headers (keep the standard marketing terminology):
 
-Format (use EXACTLY these headers):
+**HOOK (First 3 Seconds)**
+Describe what happens in the opening. What grabs attention? Be specific about visuals, audio, and emotion.
 
-**HOOK BREAKDOWN**
-What happens in the first 3 seconds and why it stops the scroll. Be specific about what you SEE and HEAR.
+**STORY LINE**
+How does the creator build the narrative? What's the main tension or curiosity gap that keeps viewers watching?
 
-**THE STORY**
-Walk through how this creator takes viewers on a journey. What's the main tension or curiosity gap? How do they keep you watching?
+**CALL TO ACTION (CTA)**
+What does the creator want viewers to do? How is it set up?
 
-**THE ASK**
-What does the creator want you to do? How do they set it up?
+**VISUAL ELEMENTS**
+Camera work, editing, text overlays, composition. What production choices matter?
 
-**VISUAL STRATEGY**
-Camera work, editing choices, text on screen - the stuff that actually matters for production.
-
-**WHY THIS WORKS**
-3 specific reasons this video gets traction. Think algorithm + human psychology.
+**SUCCESS FACTORS**
+List 3 specific reasons this video works. Think algorithm + psychology.
 
 **CONTENT TYPE**
 UGC-style / Faceless / Professional / Hybrid
 
-**CATEGORY**
+**CATEGORY**  
 Tutorial / Review / Challenge / Vlog / Entertainment / Educational / Story
 
 **TONE**
-High-energy / Chill / Emotional / Funny / Educational
+High-Energy / Calm / Emotional / Humorous / Educational / Inspirational
 
-**SPONSORED?**
-Yes / No (and what if yes)
+**IS AD**
+Yes / No (explain if yes)
 
-**AI RECREATION GUIDE**
+**AI PROMPT ENGINEERING**
 
-If you wanted to recreate this look for product shots or thumbnails:
-
-**Midjourney Prompt:**
-[Write a detailed prompt capturing the visual vibe, lighting, composition. Make it copy-pastable.]
+**Midjourney/DALL-E Prompt:**
+[Write a detailed, copy-pastable prompt capturing the visual style, lighting, composition]
 
 **Stable Diffusion Prompt:**
-[Same but optimized for SD - more technical details like "8k, photorealistic, shallow DOF"]
+[Technical version with details like "photorealistic, 8k, shallow depth of field"]
 
 **Product Swap Template:**
-"[YOUR PRODUCT] + [the scene/setting] + [the lighting/mood] + [camera angle/style]"
+"[YOUR PRODUCT] + [scene setting] + [lighting/mood] + [camera style]"
 
-Example: "[Your skincare bottle] in soft morning light, minimal white marble background, shot from above at 45 degrees, clean aesthetic, iPhone photography style"
+**Example:**
+[Show how to adapt the template with a real product example]
 
-**QUICK WINS**
-3 things you can steal for your own content RIGHT NOW.
+**REPLICABLE ELEMENTS**
+3 concrete things marketers can steal for their own content.
 
-Keep it real. No corporate speak. Write like you're texting your cofounder.`;
+Write conversationally but keep it professional. Use industry standard terms.`;
 
     const response = await axios.post(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
@@ -202,7 +199,7 @@ Keep it real. No corporate speak. Write like you're texting your cofounder.`;
           }]
         }],
         generationConfig: {
-          temperature: 0.8,
+          temperature: 0.7,
           maxOutputTokens: 8192,
         }
       },
@@ -214,7 +211,7 @@ Keep it real. No corporate speak. Write like you're texting your cofounder.`;
 
     const text = response.data.candidates[0].content.parts[0].text;
     console.log('Gemini success! Length:', text.length);
-    return parseMarketingAnalysis(text);
+    return parseAnalysis(text);
     
   } catch (error) {
     console.error('Gemini error:', error.message);
@@ -225,7 +222,7 @@ Keep it real. No corporate speak. Write like you're texting your cofounder.`;
   }
 }
 
-function parseMarketingAnalysis(text) {
+function parseAnalysis(text) {
   const extractSection = (header) => {
     const patterns = [
       new RegExp(`\\*\\*${header}\\*\\*[:\\s]*([\\s\\S]*?)(?=\\n\\n\\*\\*|$)`, 'i'),
@@ -246,26 +243,26 @@ function parseMarketingAnalysis(text) {
   };
 
   // Extract AI prompts
-  const mjMatch = text.match(/\*\*Midjourney Prompt:\*\*[\s\S]*?\n([\s\S]*?)(?=\*\*Stable Diffusion|$)/i);
+  const mjMatch = text.match(/\*\*Midjourney\/DALL-E Prompt:\*\*[\s\S]*?\n([\s\S]*?)(?=\*\*Stable Diffusion|$)/i);
   const sdMatch = text.match(/\*\*Stable Diffusion Prompt:\*\*[\s\S]*?\n([\s\S]*?)(?=\*\*Product Swap|$)/i);
-  const templateMatch = text.match(/\*\*Product Swap Template:\*\*[\s\S]*?\n([\s\S]*?)(?=Example:|$)/i);
-  const exampleMatch = text.match(/Example:([\s\S]*?)(?=\*\*QUICK WINS|$)/i);
+  const templateMatch = text.match(/\*\*Product Swap Template:\*\*[\s\S]*?\n([\s\S]*?)(?=\*\*Example:|$)/i);
+  const exampleMatch = text.match(/\*\*Example:\*\*[\s\S]*?\n([\s\S]*?)(?=\*\*REPLICABLE|$)/i);
 
   return {
-    hook: extractSection('HOOK BREAKDOWN'),
-    story: extractSection('THE STORY'),
-    cta: extractSection('THE ASK'),
-    visuals: extractSection('VISUAL STRATEGY'),
-    whyItWorks: extractSection('WHY THIS WORKS'),
+    hook: extractSection('HOOK \\(First 3 Seconds\\)') || extractSection('HOOK'),
+    storyLine: extractSection('STORY LINE'),
+    cta: extractSection('CALL TO ACTION \\(CTA\\)') || extractSection('CALL TO ACTION') || extractSection('CTA'),
+    visualElements: extractSection('VISUAL ELEMENTS'),
+    successFactors: extractSection('SUCCESS FACTORS'),
     contentType: extractField('CONTENT TYPE'),
     category: extractField('CATEGORY'),
     tone: extractField('TONE'),
-    isAd: extractField('SPONSORED'),
-    quickWins: extractSection('QUICK WINS'),
+    isAd: extractField('IS AD'),
+    replicableElements: extractSection('REPLICABLE ELEMENTS'),
     
     aiPrompts: {
-      midjourney: mjMatch ? mjMatch[1].trim().replace(/^\[|\]$/g, '') : '',
-      stableDiffusion: sdMatch ? sdMatch[1].trim().replace(/^\[|\]$/g, '') : '',
+      midjourney: mjMatch ? mjMatch[1].trim().replace(/^\[|\]$/g, '').replace(/^"|"$/g, '') : '',
+      stableDiffusion: sdMatch ? sdMatch[1].trim().replace(/^\[|\]$/g, '').replace(/^"|"$/g, '') : '',
       template: templateMatch ? templateMatch[1].trim().replace(/^"|"$/g, '') : '',
       example: exampleMatch ? exampleMatch[1].trim() : ''
     },
@@ -277,15 +274,15 @@ function parseMarketingAnalysis(text) {
 function getBasicAnalysis(video) {
   return {
     hook: `Analyzing: "${video.title || video.description}"`,
-    story: 'Add GEMINI_API_KEY for full analysis',
+    storyLine: 'Add GEMINI_API_KEY for full analysis',
     cta: 'Add GEMINI_API_KEY for full analysis',
-    visuals: 'Add GEMINI_API_KEY for full analysis',
-    whyItWorks: 'Add GEMINI_API_KEY to unlock detailed breakdown',
+    visualElements: 'Add GEMINI_API_KEY for full analysis',
+    successFactors: 'Add GEMINI_API_KEY to unlock detailed breakdown',
     contentType: 'Unknown',
     category: 'Unknown',
     tone: 'Unknown',
     isAd: 'Unknown',
-    quickWins: 'Add GEMINI_API_KEY to see actionable tips',
+    replicableElements: 'Add GEMINI_API_KEY to see actionable insights',
     aiPrompts: {
       midjourney: 'Add GEMINI_API_KEY for AI prompts',
       stableDiffusion: 'Add GEMINI_API_KEY for AI prompts',
@@ -348,15 +345,15 @@ function getDemoResults(keywords) {
       shares: 100,
       analysis: {
         hook: 'Demo mode - Add GEMINI_API_KEY for real analysis',
-        story: 'This is sample data showing what you\'ll get',
+        storyLine: 'This is sample data showing what you\'ll get',
         cta: 'Add API keys to unlock full features',
-        visuals: 'Real analysis will show detailed visual breakdown',
-        whyItWorks: 'Add GEMINI_API_KEY to see why videos go viral',
+        visualElements: 'Real analysis will show detailed visual breakdown',
+        successFactors: 'Add GEMINI_API_KEY to see why videos go viral',
         contentType: 'UGC',
         category: 'Tutorial',
         tone: 'Educational',
         isAd: 'No',
-        quickWins: 'Add API keys to see actionable tips',
+        replicableElements: 'Add API keys to see actionable insights',
         aiPrompts: {
           midjourney: 'Add GEMINI_API_KEY for AI prompts',
           stableDiffusion: 'Add GEMINI_API_KEY for AI prompts',
