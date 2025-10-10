@@ -1,15 +1,16 @@
+// ========== 最顶部：import 语句 ==========
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import axios from 'axios';
+
+// ========== 主函数 ==========
 export default async function handler(req, res) {
-  // 🔍 调试代码 - 添加在最前面
+  // 🔍 调试代码 - 在这里！
   console.log('=== 环境变量调试 ===');
   console.log('GEMINI_API_KEY 存在?', !!process.env.GEMINI_API_KEY);
   console.log('GEMINI_API_KEY 长度:', process.env.GEMINI_API_KEY?.length);
   console.log('GEMINI_API_KEY 前15个字符:', process.env.GEMINI_API_KEY?.substring(0, 15));
   console.log('==================');
-  
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import axios from 'axios';
 
-export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -19,11 +20,6 @@ export default async function handler(req, res) {
   if (!input) {
     return res.status(400).json({ error: 'Input required' });
   }
-
-  // 调试：检查环境变量
-  console.log('=== 环境变量状态 ===');
-  console.log('GEMINI_API_KEY:', process.env.GEMINI_API_KEY ? '✅ 存在' : '❌ 缺失');
-  console.log('APIFY_API_KEY:', process.env.APIFY_API_KEY ? '✅ 存在' : '❌ 缺失');
 
   try {
     const isTikTokURL = input.includes('tiktok.com');
@@ -61,6 +57,7 @@ export default async function handler(req, res) {
   }
 }
 
+// ========== 辅助函数 ==========
 async function analyzeSingleVideo(url) {
   try {
     console.log('📹 分析单个视频:', url);
@@ -281,7 +278,7 @@ function getDemoResults(keywords) {
         cta: 'Link in bio',
         tone: 'Educational',
         isAd: 'NO',
-        analysis: '🎯 Demo Analysis - Add API keys in .env.local for real results'
+        analysis: '🎯 Demo Analysis - Add API keys in Vercel for real results'
       }
     }
   ];
