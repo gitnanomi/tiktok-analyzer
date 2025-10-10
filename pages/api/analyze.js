@@ -138,52 +138,29 @@ async function analyzeWithGemini(video) {
   try {
     console.log('Calling Gemini API...');
     
-    const prompt = `You're analyzing TikTok content like a pro growth strategist. Write in plain English - NO asterisks, NO markdown symbols, NO bullet points with stars. Use numbered lists or line breaks only.
+    const prompt = `You're analyzing TikTok content like a pro strategist. Write in plain English - NO asterisks, NO markdown symbols. Use numbered lists or paragraphs only.
 
 Video: "${video.title || video.description}" by @${video.author}
 
-Provide DETAILED analysis using these EXACT sections:
+Provide analysis using these EXACT sections:
 
 HOOK (First 3 Seconds)
-Describe the opening in detail. What visual action happens? What's said? What emotion does it trigger? Why does it stop the scroll? Be specific and write in paragraph form.
+Describe the opening in 2-3 sentences. What visual action happens? What's said? Why does it stop the scroll?
 
 STORY LINE
-Explain the narrative arc. How does the creator build tension or curiosity? What pain points or relatable moments are highlighted? How do they maintain engagement? Write this as flowing paragraphs.
+Explain the narrative arc in 2-3 sentences. How does tension build? What keeps viewers watching?
+
+SCRIPTING PROCESS
+Analyze how this video was likely structured before filming. Top creators work backwards: they lock in the IDEA first, then craft a strong HOOK, immediately plan the LAST LINE (the ending/reaction), and add FORESHADOWING right after the hook to set expectations. Explain how you see this structure in the video. Write 3-4 sentences about how the creator engineered this video from hook to ending.
 
 CALL TO ACTION (CTA)
-What action does the creator want? How is it set up? Is it explicit or implied? Describe the technique.
+What action does the creator want? How is it set up? Write 2 sentences.
 
 VISUAL ELEMENTS
-Camera work, editing pace, composition, text overlays, transitions. What production choices stand out? Describe the visual style in detail.
-
-JENNY HOYOS FILMING FRAMEWORK
-Reverse-engineer this video using Jenny Hoyos' proven structure:
-
-1. THE IDEA VALIDATION
-   What's the core concept? Why does it work logically? Would viewers actually want to watch this?
-
-2. THE HOOK CONSTRUCTION
-   Describe how the hook is purely visual and simple. Could you understand it without sound? How does it grab attention in under 3 seconds?
-
-3. THE LAST LINE STRATEGY
-   What's the planned ending? Even if it's left as reaction [blank], what's the setup for the final moment? How does this create an abrupt ending to maximize retention?
-
-4. THE FORESHADOWING TECHNIQUE
-   Right after the hook, what expectation is set? What does the creator promise will happen by the end? How does this verbal or visual foreshadowing create a mechanism that drives viewers to watch until the end?
-
-5. THE ROUGH SCRIPT APPROACH
-   Based on what you see, what were likely the bullet points or rough script elements planned before filming? What's the conceptual flow from hook to ending?
-
-6. THE FILMING EXECUTION
-   How was this actually shot? Single take? Multiple angles? What filming choices support the structure?
-
-7. THE EDIT DECISIONS
-   What editing choices reinforce the hook-foreshadow-ending structure? Where are the cuts? How does pacing support retention?
-
-This Jenny Hoyos framework shows how top creators engineer videos backwards - starting with how to hook and how to end, then filling the middle.
+Camera work, editing, composition. Describe in 2-3 sentences.
 
 SUCCESS FACTORS
-List 3-5 specific reasons this video works from both algorithm and psychology perspectives. Write as numbered paragraphs without using asterisks.
+List 3 reasons this video works. Write as numbered points without asterisks.
 
 CONTENT TYPE
 UGC-style / Faceless / Professional / Hybrid
@@ -199,22 +176,32 @@ Yes / No (explain if yes)
 
 AI PROMPT ENGINEERING
 
+STEP 1 - Reference Image Analysis
+
 Midjourney/DALL-E Prompt:
-[Write detailed prompt for recreating the visual style - no brackets in final output]
+[Detailed prompt for recreating visual style - subject, setting, lighting, color palette, camera angle, mood]
 
 Stable Diffusion Prompt:
-[Technical prompt with details like photorealistic, 8k, lighting specs - no brackets in final output]
+[Technical prompt with photorealistic, 8k, lighting specs, shallow depth of field, etc]
+
+STEP 2 - Product Replacement Strategy
 
 Product Swap Template:
 [YOUR PRODUCT] + [scene setting] + [lighting] + [camera style]
 
 Example:
-[Specific example showing how to adapt template]
+[Specific example showing how to adapt template with a real product]
+
+STEP 3 - Shot-by-Shot Breakdown
+
+Scene 1 (0-3s): [First 3 seconds visual + AI prompt for this shot]
+Scene 2 (3-10s): [Middle section visual + AI prompt]
+Scene 3 (10-15s): [Ending visual + AI prompt]
 
 REPLICABLE ELEMENTS
-List 3-5 concrete tactics marketers can steal. Write as numbered items without asterisks.
+List 3 tactics marketers can steal. Write as numbered points without asterisks.
 
-Remember: NO asterisks anywhere. Use clear paragraph breaks and numbered lists only. Write like you're explaining to a marketing team in a meeting.`;
+Remember: NO asterisks. Write concisely. Each section should be 2-4 sentences max except the numbered lists.`;
 
     const response = await axios.post(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
@@ -268,21 +255,23 @@ function parseDetailedAnalysis(text) {
     return match ? match[1].trim() : 'Not specified';
   };
 
-  // Extract Jenny Hoyos Framework
-  const jennyFramework = extractSection('JENNY HOYOS FILMING FRAMEWORK');
-
-  // Extract AI prompts
+  // Extract AI prompts - Step 1
   const mjMatch = text.match(/Midjourney\/DALL-E Prompt:[\s\S]*?\n([\s\S]*?)(?=Stable Diffusion|$)/i);
-  const sdMatch = text.match(/Stable Diffusion Prompt:[\s\S]*?\n([\s\S]*?)(?=Product Swap|$)/i);
+  const sdMatch = text.match(/Stable Diffusion Prompt:[\s\S]*?\n([\s\S]*?)(?=STEP 2|Product Swap|$)/i);
+  
+  // Extract AI prompts - Step 2
   const templateMatch = text.match(/Product Swap Template:[\s\S]*?\n([\s\S]*?)(?=Example:|$)/i);
-  const exampleMatch = text.match(/Example:[\s\S]*?\n([\s\S]*?)(?=REPLICABLE|$)/i);
+  const exampleMatch = text.match(/Example:[\s\S]*?\n([\s\S]*?)(?=STEP 3|$)/i);
+  
+  // Extract AI prompts - Step 3
+  const step3Match = text.match(/STEP 3[\s\S]*?Breakdown[\s\S]*?\n([\s\S]*?)(?=REPLICABLE|$)/i);
 
   return {
     hook: extractSection('HOOK \\(First 3 Seconds\\)') || extractSection('HOOK'),
     storyLine: extractSection('STORY LINE'),
+    scriptingProcess: extractSection('SCRIPTING PROCESS'),
     cta: extractSection('CALL TO ACTION \\(CTA\\)') || extractSection('CALL TO ACTION'),
     visualElements: extractSection('VISUAL ELEMENTS'),
-    jennyFramework: jennyFramework,
     successFactors: extractSection('SUCCESS FACTORS'),
     contentType: extractField('CONTENT TYPE'),
     category: extractField('CATEGORY'),
@@ -291,10 +280,17 @@ function parseDetailedAnalysis(text) {
     replicableElements: extractSection('REPLICABLE ELEMENTS'),
     
     aiPrompts: {
-      midjourney: mjMatch ? mjMatch[1].trim().replace(/^\[|\]$/g, '').replace(/^"|"$/g, '') : '',
-      stableDiffusion: sdMatch ? sdMatch[1].trim().replace(/^\[|\]$/g, '').replace(/^"|"$/g, '') : '',
-      template: templateMatch ? templateMatch[1].trim().replace(/^"|"$/g, '') : '',
-      example: exampleMatch ? exampleMatch[1].trim() : ''
+      step1: {
+        midjourneyPrompt: mjMatch ? mjMatch[1].trim().replace(/^\[|\]$/g, '').replace(/^"|"$/g, '') : '',
+        stableDiffusionPrompt: sdMatch ? sdMatch[1].trim().replace(/^\[|\]$/g, '').replace(/^"|"$/g, '') : ''
+      },
+      step2: {
+        template: templateMatch ? templateMatch[1].trim().replace(/^"|"$/g, '') : '',
+        example: exampleMatch ? exampleMatch[1].trim() : ''
+      },
+      step3: {
+        breakdown: step3Match ? step3Match[1].trim() : ''
+      }
     },
     
     fullText: text
@@ -305,9 +301,9 @@ function getBasicAnalysis(video) {
   return {
     hook: `Analyzing: "${video.title || video.description}"`,
     storyLine: 'Add GEMINI_API_KEY for full analysis',
+    scriptingProcess: 'Add GEMINI_API_KEY for scripting process analysis',
     cta: 'Add GEMINI_API_KEY for full analysis',
     visualElements: 'Add GEMINI_API_KEY for full analysis',
-    jennyFramework: 'Add GEMINI_API_KEY to unlock Jenny Hoyos framework analysis',
     successFactors: 'Add GEMINI_API_KEY to unlock detailed breakdown',
     contentType: 'Unknown',
     category: 'Unknown',
@@ -315,10 +311,17 @@ function getBasicAnalysis(video) {
     isAd: 'Unknown',
     replicableElements: 'Add GEMINI_API_KEY to see actionable insights',
     aiPrompts: {
-      midjourney: 'Add GEMINI_API_KEY for AI prompts',
-      stableDiffusion: 'Add GEMINI_API_KEY for AI prompts',
-      template: 'Add GEMINI_API_KEY for templates',
-      example: ''
+      step1: {
+        midjourneyPrompt: 'Add GEMINI_API_KEY for AI prompts',
+        stableDiffusionPrompt: 'Add GEMINI_API_KEY for AI prompts'
+      },
+      step2: {
+        template: 'Add GEMINI_API_KEY for templates',
+        example: ''
+      },
+      step3: {
+        breakdown: ''
+      }
     }
   };
 }
@@ -377,9 +380,9 @@ function getDemoResults(keywords) {
       analysis: {
         hook: 'Demo mode - Add GEMINI_API_KEY for real analysis',
         storyLine: 'This is sample data showing what you will get',
+        scriptingProcess: 'Add GEMINI_API_KEY for scripting analysis',
         cta: 'Add API keys to unlock full features',
         visualElements: 'Real analysis will show detailed visual breakdown',
-        jennyFramework: 'Add GEMINI_API_KEY to see Jenny Hoyos framework analysis',
         successFactors: 'Add GEMINI_API_KEY to see why videos go viral',
         contentType: 'UGC',
         category: 'Tutorial',
@@ -387,10 +390,17 @@ function getDemoResults(keywords) {
         isAd: 'No',
         replicableElements: 'Add API keys to see actionable insights',
         aiPrompts: {
-          midjourney: 'Add GEMINI_API_KEY for AI prompts',
-          stableDiffusion: 'Add GEMINI_API_KEY for AI prompts',
-          template: 'Add API keys to unlock',
-          example: ''
+          step1: {
+            midjourneyPrompt: 'Add GEMINI_API_KEY for AI prompts',
+            stableDiffusionPrompt: 'Add GEMINI_API_KEY for AI prompts'
+          },
+          step2: {
+            template: 'Add API keys to unlock',
+            example: ''
+          },
+          step3: {
+            breakdown: ''
+          }
         }
       }
     }
