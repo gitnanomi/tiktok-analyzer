@@ -1,15 +1,10 @@
-// ========== 最顶部：import 语句 ==========
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import axios from 'axios';
 
-// ========== 主函数 ==========
 export default async function handler(req, res) {
-  // 🔍 调试代码
-  console.log('=== 环境变量调试 ===');
-  console.log('GEMINI_API_KEY 存在?', !!process.env.GEMINI_API_KEY);
-  console.log('GEMINI_API_KEY 长度:', process.env.GEMINI_API_KEY?.length);
-  console.log('APIFY_API_KEY 存在?', !!process.env.APIFY_API_KEY);
-  console.log('==================');
+  console.log('=== Environment Check ===');
+  console.log('GEMINI_API_KEY:', !!process.env.GEMINI_API_KEY);
+  console.log('APIFY_API_KEY:', !!process.env.APIFY_API_KEY);
 
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -50,17 +45,16 @@ export default async function handler(req, res) {
       });
     }
   } catch (error) {
-    console.error('❌ API Error:', error);
+    console.error('API Error:', error);
     return res.status(500).json({ 
       error: error.message
     });
   }
 }
 
-// ========== 辅助函数 ==========
 async function analyzeSingleVideo(url) {
   try {
-    console.log('📹 分析单个视频:', url);
+    console.log('Analyzing video:', url);
     const metadata = await fetchMetadata(url);
     const analysis = await analyzeWithGemini(metadata);
     
@@ -71,16 +65,15 @@ async function analyzeSingleVideo(url) {
       analyzedAt: new Date().toISOString()
     };
   } catch (error) {
-    console.error('分析失败:', error);
+    console.error('Analysis failed:', error);
     throw new Error('Unable to analyze video: ' + error.message);
   }
 }
 
 async function analyzeBatchVideos(keywords) {
-  console.log('🔍 批量搜索:', keywords);
+  console.log('Batch search:', keywords);
   
   if (!process.env.APIFY_API_KEY) {
-    console.log('⚠️  无 APIFY_API_KEY，使用演示数据');
     return getDemoResults(keywords);
   }
   
@@ -101,14 +94,14 @@ async function analyzeBatchVideos(keywords) {
           analyzedAt: new Date().toISOString()
         });
       } catch (error) {
-        console.error(`视频 ${i} 分析失败:`, error);
+        console.error(`Video ${i} failed:`, error);
       }
     }
     
     return results.length > 0 ? results : getDemoResults(keywords);
     
   } catch (error) {
-    console.error('批量分析错误:', error);
+    console.error('Batch error:', error);
     return getDemoResults(keywords);
   }
 }
@@ -128,7 +121,7 @@ async function fetchMetadata(url) {
       thumbnail: res.data.thumbnail_url
     };
   } catch (error) {
-    console.error('获取元数据失败:', error);
+    console.error('Metadata fetch failed:', error);
     return {
       title: 'Unable to fetch metadata',
       author: 'Unknown',
@@ -139,109 +132,67 @@ async function fetchMetadata(url) {
 
 async function analyzeWithGemini(video) {
   if (!process.env.GEMINI_API_KEY) {
-    console.log('⚠️  无 GEMINI_API_KEY');
     return getBasicAnalysis(video);
   }
 
   try {
-    console.log('🤖 使用 REST API 调用 Gemini...');
+    console.log('Calling Gemini API...');
     
-    const prompt = `You are a TikTok viral content analyst AND an AI image generation prompt expert. Analyze this video following Steven's 7-day market research framework, and ALSO generate AI prompts for recreating the visual style.
+    const prompt = `Act as a sharp, experienced TikTok growth strategist who's scaled multiple accounts to 1M+ followers. Analyze this video like you're briefing a client's marketing team.
 
-Video Information:
-- Title: ${video.title || video.description}
-- Author: @${video.author}
+Video: "${video.title || video.description}" by @${video.author}
 
-Provide a DETAILED analysis in this EXACT format:
+Write your analysis in a DIRECT, conversational style. No fluff. Talk like a real marketer in a strategy meeting.
 
-ContentType: [Choose ONE: UGC_faceless / UGC_with_face / professional / hybrid]
+Format (use EXACTLY these headers):
 
-Category: [Choose ONE: Tutorial / Review / Challenge / Vlog / Entertainment / Educational / Story / Transformation]
+**HOOK BREAKDOWN**
+What happens in the first 3 seconds and why it stops the scroll. Be specific about what you SEE and HEAR.
 
-🎯 HOOK (First 3 Seconds):
-- Opening Line: [Exact words or concept used in first 3 seconds]
-- Visual Action: [What happens visually - walking, putting down camera, close-up, etc.]
-- Emotion: [What emotion is conveyed - surprise, curiosity, shock, etc.]
-- Why It Works: [Why this hook grabs attention]
+**THE STORY**
+Walk through how this creator takes viewers on a journey. What's the main tension or curiosity gap? How do they keep you watching?
 
-📖 STORY LINE (Pain Points & Journey):
-- Main Pain Point: [What problem or struggle is highlighted]
-- User Experience: [Specific experiences or emotions described]
-- Emotional Resonance: [How it connects with the audience]
-- Key Phrases: [Memorable quotes or statements]
+**THE ASK**
+What does the creator want you to do? How do they set it up?
 
-🎬 CALL TO ACTION / SOLUTION:
-- Ending: [How the video concludes]
-- Recommendation: [What product, method, or solution is suggested]
-- User Action: [What viewers are expected to do - click link, try method, comment, etc.]
+**VISUAL STRATEGY**
+Camera work, editing choices, text on screen - the stuff that actually matters for production.
 
-🎨 VISUAL ELEMENTS:
-- Filming Style: [Selfie, walking shot, static, montage, etc.]
-- Scene Setting: [Location, background, lighting]
-- Color Palette: [Dominant colors - warm/cool/vibrant/muted]
-- Composition: [Framing, rule of thirds, close-up, wide shot]
-- Lighting: [Natural, studio, dramatic, soft, harsh]
-- Text Overlays: [Any on-screen text, captions, or graphics]
-- Visual Effects: [Filters, transitions, speed changes]
+**WHY THIS WORKS**
+3 specific reasons this video gets traction. Think algorithm + human psychology.
 
-🎵 AUDIO TYPE:
-[Human narration / Background music with text / Trending audio / Silent with captions / Voice-over]
+**CONTENT TYPE**
+UGC-style / Faceless / Professional / Hybrid
 
-💡 TONE & ENERGY:
-[High-Energy / Calm & Informative / Emotional / Humorous / Inspirational / Urgent]
+**CATEGORY**
+Tutorial / Review / Challenge / Vlog / Entertainment / Educational / Story
 
-💰 IS AD:
-[YES / NO] - If YES, explain what is being promoted and how
+**TONE**
+High-energy / Chill / Emotional / Funny / Educational
 
-🔥 SUCCESS FACTORS (Why It Goes Viral):
-1. [First key success factor]
-2. [Second key success factor]
-3. [Third key success factor]
+**SPONSORED?**
+Yes / No (and what if yes)
 
-📋 REPLICABLE ELEMENTS:
-- [Element 1 you can copy]
-- [Element 2 you can copy]
-- [Element 3 you can copy]
+**AI RECREATION GUIDE**
 
-🤖 AI PROMPT ENGINEERING:
+If you wanted to recreate this look for product shots or thumbnails:
 
-**STEP 1 - Reference Image Analysis:**
-Based on the visual elements above, here's the AI prompt to recreate this video's style:
+**Midjourney Prompt:**
+[Write a detailed prompt capturing the visual vibe, lighting, composition. Make it copy-pastable.]
 
-Midjourney/DALL-E Prompt:
-[Detailed prompt describing: subject, setting, lighting, color palette, camera angle, mood, style. Example: "A close-up selfie shot of a person in natural lighting, soft focus background, warm color grading, authentic UGC style, shot on iPhone, slightly grainy texture, casual home setting"]
+**Stable Diffusion Prompt:**
+[Same but optimized for SD - more technical details like "8k, photorealistic, shallow DOF"]
 
-Stable Diffusion Prompt:
-[Similar but optimized for SD: include technical details like "photorealistic, 8k, natural lighting, shallow depth of field, bokeh effect"]
+**Product Swap Template:**
+"[YOUR PRODUCT] + [the scene/setting] + [the lighting/mood] + [camera angle/style]"
 
-**STEP 2 - Product Replacement Strategy:**
-To recreate this visual style with YOUR product:
+Example: "[Your skincare bottle] in soft morning light, minimal white marble background, shot from above at 45 degrees, clean aesthetic, iPhone photography style"
 
-Original Subject: [What was shown in the video]
-Your Product Placement: [How to position your product in similar style]
+**QUICK WINS**
+3 things you can steal for your own content RIGHT NOW.
 
-Combined AI Prompt Template:
-"[YOUR PRODUCT] + [scene setting from Step 1] + [lighting and composition] + [style and mood]"
+Keep it real. No corporate speak. Write like you're texting your cofounder.`;
 
-Example: If original was "person holding vape pen in bedroom", your prompt could be:
-"[YOUR PRODUCT NAME] held in hand, cozy bedroom setting, natural window lighting from left, warm color grading 2700K, authentic UGC aesthetic, shot on iPhone 14, slightly grainy texture, close-up composition, soft focus background, shallow depth of field"
-
-**STEP 3 - Shot-by-Shot Breakdown:**
-Scene 1 (0-3s): [First 3 seconds visual description + specific AI prompt for this shot]
-Scene 2 (3-10s): [Middle section visual + AI prompt]
-Scene 3 (10-15s): [Ending visual + AI prompt]
-
-🎯 VISUAL REPLICATION GUIDE:
-- Camera Settings to Mimic: [Phone/DSLR, Portrait mode, specific settings]
-- Editing Style: [Filters used, color grading specifics, transitions]
-- Props/Background: [What objects or settings to include]
-- Timing: [Duration of each shot, pacing]
-- Text Style: [Font, animation, placement if applicable]
-
-🎬 CONTENT STRATEGY INSIGHTS:
-[2-3 sentences on how this content format can be replicated for other products/niches, and why this approach works for viral content]`;
-
-    // 🎯 使用 REST API
     const response = await axios.post(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {
@@ -251,8 +202,8 @@ Scene 3 (10-15s): [Ending visual + AI prompt]
           }]
         }],
         generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 4096,
+          temperature: 0.8,
+          maxOutputTokens: 8192,
         }
       },
       {
@@ -262,112 +213,84 @@ Scene 3 (10-15s): [Ending visual + AI prompt]
     );
 
     const text = response.data.candidates[0].content.parts[0].text;
-    console.log('✅ Gemini 成功！长度:', text.length);
-    return parseDetailedAnalysis(text);
+    console.log('Gemini success! Length:', text.length);
+    return parseMarketingAnalysis(text);
     
   } catch (error) {
-    console.error('❌ Gemini 错误:', error.message);
+    console.error('Gemini error:', error.message);
     if (error.response) {
-      console.error('错误详情:', JSON.stringify(error.response.data));
+      console.error('Error details:', JSON.stringify(error.response.data));
     }
     return getBasicAnalysis(video);
   }
 }
 
-function parseDetailedAnalysis(text) {
+function parseMarketingAnalysis(text) {
   const extractSection = (header) => {
-    const regex = new RegExp(`${header}[:\\s]*([\\s\\S]*?)(?=\\n\\n[🎯📖🎬🎨🎵💡💰🔥📋🤖🎬]|$)`, 'i');
-    const match = text.match(regex);
-    return match ? match[1].trim() : '';
+    const patterns = [
+      new RegExp(`\\*\\*${header}\\*\\*[:\\s]*([\\s\\S]*?)(?=\\n\\n\\*\\*|$)`, 'i'),
+      new RegExp(`${header}[:\\s]*([\\s\\S]*?)(?=\\n\\n[A-Z]|$)`, 'i')
+    ];
+    
+    for (const regex of patterns) {
+      const match = text.match(regex);
+      if (match) return match[1].trim();
+    }
+    return '';
   };
 
-  const extractSimple = (field) => {
-    const regex = new RegExp(`${field}:\\s*(.+?)(?:\\n|$)`, 'i');
+  const extractField = (field) => {
+    const regex = new RegExp(`\\*\\*${field}\\*\\*[:\\s]*(.+?)(?=\\n|$)`, 'i');
     const match = text.match(regex);
     return match ? match[1].trim() : 'Not specified';
   };
 
-  // 提取 AI 提示词的各个步骤
-  const extractAIPrompt = () => {
-    const aiSection = extractSection('🤖 AI PROMPT ENGINEERING') || extractSection('AI PROMPT');
-    
-    // 提取 Step 1 - 参考图提示词
-    const mjMatch = aiSection.match(/Midjourney\/DALL-E Prompt[:\s]*([\s\S]*?)(?=Stable Diffusion|STEP 2|$)/i);
-    const mjPrompt = mjMatch ? mjMatch[1].trim().replace(/^\[|\]$/g, '').replace(/^"|"$/g, '') : '';
-    
-    const sdMatch = aiSection.match(/Stable Diffusion Prompt[:\s]*([\s\S]*?)(?=\*\*STEP 2|$)/i);
-    const sdPrompt = sdMatch ? sdMatch[1].trim().replace(/^\[|\]$/g, '').replace(/^"|"$/g, '') : '';
-    
-    // 提取 Step 2 - 产品替换策略
-    const templateMatch = aiSection.match(/Combined AI Prompt Template[:\s]*([\s\S]*?)(?=Example:|STEP 3|$)/i);
-    const combinedTemplate = templateMatch ? templateMatch[1].trim().replace(/^"|"$/g, '') : '';
-    
-    const exampleMatch = aiSection.match(/Example:[\s\S]*?your prompt could be[:\s]*([\s\S]*?)(?=\*\*STEP 3|$)/i);
-    const example = exampleMatch ? exampleMatch[1].trim().replace(/^"|"$/g, '') : '';
-    
-    // 提取 Step 3 - 分镜头
-    const step3Match = aiSection.match(/\*\*STEP 3[\s\S]*?:([\s\S]*?)(?=🎯|$)/i);
-    const shotBreakdown = step3Match ? step3Match[1].trim() : '';
-    
-    return {
-      step1: {
-        midjourneyPrompt: mjPrompt,
-        stableDiffusionPrompt: sdPrompt
-      },
-      step2: {
-        template: combinedTemplate,
-        example: example
-      },
-      step3: {
-        breakdown: shotBreakdown
-      }
-    };
-  };
+  // Extract AI prompts
+  const mjMatch = text.match(/\*\*Midjourney Prompt:\*\*[\s\S]*?\n([\s\S]*?)(?=\*\*Stable Diffusion|$)/i);
+  const sdMatch = text.match(/\*\*Stable Diffusion Prompt:\*\*[\s\S]*?\n([\s\S]*?)(?=\*\*Product Swap|$)/i);
+  const templateMatch = text.match(/\*\*Product Swap Template:\*\*[\s\S]*?\n([\s\S]*?)(?=Example:|$)/i);
+  const exampleMatch = text.match(/Example:([\s\S]*?)(?=\*\*QUICK WINS|$)/i);
 
   return {
-    contentType: extractSimple('ContentType'),
-    category: extractSimple('Category'),
-    hook: extractSection('🎯 HOOK') || extractSection('HOOK'),
-    storyLine: extractSection('📖 STORY LINE') || extractSection('STORY LINE'),
-    cta: extractSection('🎬 CALL TO ACTION') || extractSection('CALL TO ACTION'),
-    visualElements: extractSection('🎨 VISUAL ELEMENTS') || extractSection('VISUAL ELEMENTS'),
-    audioType: extractSection('🎵 AUDIO TYPE') || extractSection('AUDIO TYPE'),
-    tone: extractSection('💡 TONE') || extractSimple('TONE'),
-    isAd: extractSimple('IS AD'),
-    successFactors: extractSection('🔥 SUCCESS FACTORS') || extractSection('SUCCESS FACTORS'),
-    replicableElements: extractSection('📋 REPLICABLE ELEMENTS') || extractSection('REPLICABLE ELEMENTS'),
+    hook: extractSection('HOOK BREAKDOWN'),
+    story: extractSection('THE STORY'),
+    cta: extractSection('THE ASK'),
+    visuals: extractSection('VISUAL STRATEGY'),
+    whyItWorks: extractSection('WHY THIS WORKS'),
+    contentType: extractField('CONTENT TYPE'),
+    category: extractField('CATEGORY'),
+    tone: extractField('TONE'),
+    isAd: extractField('SPONSORED'),
+    quickWins: extractSection('QUICK WINS'),
     
-    // 🎨 AI 提示词
-    aiPrompts: extractAIPrompt(),
-    visualReplicationGuide: extractSection('🎯 VISUAL REPLICATION GUIDE'),
+    aiPrompts: {
+      midjourney: mjMatch ? mjMatch[1].trim().replace(/^\[|\]$/g, '') : '',
+      stableDiffusion: sdMatch ? sdMatch[1].trim().replace(/^\[|\]$/g, '') : '',
+      template: templateMatch ? templateMatch[1].trim().replace(/^"|"$/g, '') : '',
+      example: exampleMatch ? exampleMatch[1].trim() : ''
+    },
     
-    strategyInsights: extractSection('🎬 CONTENT STRATEGY INSIGHTS') || extractSection('CONTENT STRATEGY INSIGHTS'),
-    fullAnalysis: text
+    fullText: text
   };
 }
 
 function getBasicAnalysis(video) {
   return {
+    hook: `Analyzing: "${video.title || video.description}"`,
+    story: 'Add GEMINI_API_KEY for full analysis',
+    cta: 'Add GEMINI_API_KEY for full analysis',
+    visuals: 'Add GEMINI_API_KEY for full analysis',
+    whyItWorks: 'Add GEMINI_API_KEY to unlock detailed breakdown',
     contentType: 'Unknown',
     category: 'Unknown',
-    hook: `Based on: "${video.title || video.description}"`,
-    visualElements: 'Add GEMINI_API_KEY for full analysis',
-    audioType: 'Unknown',
     tone: 'Unknown',
     isAd: 'Unknown',
-    successFactors: '📋 Basic metadata only. Add GEMINI_API_KEY for AI analysis.',
+    quickWins: 'Add GEMINI_API_KEY to see actionable tips',
     aiPrompts: {
-      step1: {
-        midjourneyPrompt: 'AI analysis requires GEMINI_API_KEY',
-        stableDiffusionPrompt: 'AI analysis requires GEMINI_API_KEY'
-      },
-      step2: {
-        template: 'Please add GEMINI_API_KEY to unlock AI prompt generation',
-        example: ''
-      },
-      step3: {
-        breakdown: ''
-      }
+      midjourney: 'Add GEMINI_API_KEY for AI prompts',
+      stableDiffusion: 'Add GEMINI_API_KEY for AI prompts',
+      template: 'Add GEMINI_API_KEY for templates',
+      example: ''
     }
   };
 }
@@ -406,7 +329,7 @@ async function searchWithApify(keywords) {
     }));
     
   } catch (error) {
-    console.error('Apify 错误:', error.message);
+    console.error('Apify error:', error.message);
     return null;
   }
 }
@@ -424,26 +347,21 @@ function getDemoResults(keywords) {
       comments: 200,
       shares: 100,
       analysis: {
-        contentType: 'UGC_with_face',
+        hook: 'Demo mode - Add GEMINI_API_KEY for real analysis',
+        story: 'This is sample data showing what you\'ll get',
+        cta: 'Add API keys to unlock full features',
+        visuals: 'Real analysis will show detailed visual breakdown',
+        whyItWorks: 'Add GEMINI_API_KEY to see why videos go viral',
+        contentType: 'UGC',
         category: 'Tutorial',
-        hook: 'Attention-grabbing question in first 3 seconds',
-        visualElements: 'Close-up shot with text overlay',
-        audioType: 'Human narration',
         tone: 'Educational',
-        isAd: 'NO',
-        successFactors: '🎯 Demo Analysis - Add API keys in Vercel for real results',
+        isAd: 'No',
+        quickWins: 'Add API keys to see actionable tips',
         aiPrompts: {
-          step1: {
-            midjourneyPrompt: 'Demo mode - Add GEMINI_API_KEY for AI prompts',
-            stableDiffusionPrompt: 'Demo mode - Add GEMINI_API_KEY for AI prompts'
-          },
-          step2: {
-            template: 'Add API keys to unlock this feature',
-            example: ''
-          },
-          step3: {
-            breakdown: ''
-          }
+          midjourney: 'Add GEMINI_API_KEY for AI prompts',
+          stableDiffusion: 'Add GEMINI_API_KEY for AI prompts',
+          template: 'Add API keys to unlock',
+          example: ''
         }
       }
     }
