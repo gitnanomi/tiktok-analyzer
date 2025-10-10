@@ -86,7 +86,6 @@ export default function Home() {
       <div className="bg-gradient-to-br from-purple-600 via-purple-700 to-indigo-800 min-h-screen p-6">
         <div className="max-w-7xl mx-auto">
           
-          {/* Header */}
           <div className="text-center mb-8">
             <h1 className="text-5xl font-black text-white mb-3">
               🎯 TikTok Analyzer Pro
@@ -96,7 +95,6 @@ export default function Home() {
             </p>
           </div>
 
-          {/* 功能说明 */}
           <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-6 mb-8">
             <h3 className="text-xl font-bold text-gray-900 mb-3">
               🎨 功能特色
@@ -117,7 +115,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Input Section */}
           <div className="bg-white rounded-3xl shadow-2xl p-8 mb-8">
             
             <div className="mb-6">
@@ -150,7 +147,6 @@ export default function Home() {
               )}
             </div>
 
-            {/* Stats */}
             <div className="grid grid-cols-3 gap-4">
               <div className="bg-purple-50 p-4 rounded-xl text-center">
                 <div className="text-3xl font-black text-purple-600">
@@ -182,7 +178,6 @@ export default function Home() {
             )}
           </div>
 
-          {/* Results */}
           {results.length > 0 && (
             <div className="space-y-6">
               <div className="bg-white/10 backdrop-blur p-4 rounded-xl">
@@ -198,7 +193,6 @@ export default function Home() {
               {results.map((result, idx) => (
                 <div key={idx} className="bg-white rounded-3xl shadow-2xl p-8">
                   
-                  {/* Video Header */}
                   <div className="flex items-start gap-4 mb-6">
                     <div className="flex-1">
                       <h3 className="text-2xl font-bold text-gray-900 mb-2">
@@ -214,11 +208,9 @@ export default function Home() {
                     )}
                   </div>
 
-                  {/* Analysis Content */}
                   {result.analysis && (
                     <div className="space-y-4">
                       
-                      {/* Hook */}
                       {result.analysis.hook && (
                         <div className="bg-red-50 p-6 rounded-xl">
                           <div className="font-bold text-red-900 mb-3 text-lg">🎯 Hook (First 3 Seconds)</div>
@@ -226,7 +218,6 @@ export default function Home() {
                         </div>
                       )}
 
-                      {/* Story Line */}
                       {result.analysis.storyLine && (
                         <div className="bg-purple-50 p-6 rounded-xl">
                           <div className="font-bold text-purple-900 mb-3 text-lg">📖 Story Line</div>
@@ -234,7 +225,6 @@ export default function Home() {
                         </div>
                       )}
 
-                      {/* CTA */}
                       {result.analysis.cta && (
                         <div className="bg-green-50 p-6 rounded-xl">
                           <div className="font-bold text-green-900 mb-3 text-lg">🎬 Call to Action</div>
@@ -242,7 +232,6 @@ export default function Home() {
                         </div>
                       )}
 
-                      {/* Visual Elements */}
                       {result.analysis.visualElements && (
                         <div className="bg-blue-50 p-6 rounded-xl">
                           <div className="font-bold text-blue-900 mb-3 text-lg">🎨 Visual Elements</div>
@@ -250,7 +239,6 @@ export default function Home() {
                         </div>
                       )}
 
-                      {/* Success Factors */}
                       {result.analysis.successFactors && (
                         <div className="bg-yellow-50 p-6 rounded-xl">
                           <div className="font-bold text-yellow-900 mb-3 text-lg">🔥 Success Factors</div>
@@ -258,20 +246,17 @@ export default function Home() {
                         </div>
                       )}
 
-                      {/* AI 提示词工程 */}
                       {result.analysis.aiPrompts && (
                         <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-xl border-2 border-purple-200">
                           <div className="font-bold text-purple-900 mb-4 text-xl">
                             🤖 AI 提示词生成器
                           </div>
                           
-                          {/* Step 1: 参考图提示词 */}
                           <div className="mb-6">
                             <div className="font-semibold text-lg mb-3 text-purple-800">
                               📸 Step 1: 参考图提示词反推
                             </div>
                             
-                            {/* Midjourney/DALL-E */}
                             {result.analysis.aiPrompts.step1?.midjourneyPrompt && (
                               <div className="mb-4 bg-white p-4 rounded-lg">
                                 <div className="text-sm font-semibold text-gray-700 mb-2">
@@ -292,7 +277,6 @@ export default function Home() {
                               </div>
                             )}
                             
-                            {/* Stable Diffusion */}
                             {result.analysis.aiPrompts.step1?.stableDiffusionPrompt && (
                               <div className="bg-white p-4 rounded-lg">
                                 <div className="text-sm font-semibold text-gray-700 mb-2">
@@ -314,7 +298,6 @@ export default function Home() {
                             )}
                           </div>
                           
-                          {/* Step 2: 产品替换 */}
                           {result.analysis.aiPrompts.step2?.template && (
                             <div className="mb-6">
                               <div className="font-semibold text-lg mb-3 text-purple-800">
@@ -355,7 +338,6 @@ export default function Home() {
                             </div>
                           )}
                           
-                          {/* Step 3: 分镜头 */}
                           {result.analysis.aiPrompts.step3?.breakdown && (
                             <div>
                               <div className="font-semibold text-lg mb-3 text-purple-800">
@@ -371,7 +353,6 @@ export default function Home() {
                         </div>
                       )}
 
-                      {/* Visual Replication Guide */}
                       {result.analysis.visualReplicationGuide && (
                         <div className="bg-indigo-50 p-6 rounded-xl">
                           <div className="font-bold text-indigo-900 mb-3 text-lg">
@@ -383,7 +364,6 @@ export default function Home() {
                         </div>
                       )}
 
-                      {/* Strategy Insights */}
                       {result.analysis.strategyInsights && (
                         <div className="bg-teal-50 p-6 rounded-xl">
                           <div className="font-bold text-teal-900 mb-3 text-lg">
@@ -395,7 +375,6 @@ export default function Home() {
                         </div>
                       )}
 
-                      {/* Category & Metrics */}
                       <div className="grid md:grid-cols-3 gap-4">
                         <div className="bg-indigo-50 p-4 rounded-xl">
                           <div className="font-bold text-indigo-900 mb-2">📁 Category</div>
@@ -404,7 +383,7 @@ export default function Home() {
                           </span>
                         </div>
                         <div className="bg-pink-50 p-4 rounded-xl">
-                          <div className="font-bold text-pink-900 mb-2">🎵 Audio</div>
+                          <div className="font-bold text-pink-900 mb-2">🎵 Tone</div>
                           <span className="bg-pink-200 px-3 py-1 rounded-full text-sm">
                             {result.analysis.tone}
                           </span>
@@ -420,23 +399,21 @@ export default function Home() {
                     </div>
                   )}
 
-          {/* Video Link */}
-{result.url && (
-  
-    href={result.url}
-    target="_blank"
-    rel="noopener noreferrer"
-    className="inline-block mt-6 text-purple-600 hover:text-purple-800 font-semibold"
-  >
-    🔗 Watch on TikTok →
-  </a>
-)}
+                  {result.url && (
+                    
+                      href={result.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-block mt-6 text-purple-600 hover:text-purple-800 font-semibold"
+                    >
+                      🔗 Watch on TikTok →
+                    </a>
+                  )}
                 </div>
               ))}
             </div>
           )}
 
-          {/* Empty State */}
           {results.length === 0 && !loading && (
             <div className="bg-white rounded-3xl shadow-2xl p-16 text-center">
               <div className="text-6xl mb-6">🎬</div>
