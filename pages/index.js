@@ -399,10 +399,10 @@ export default function Home() {
                     </div>
                   )}
 
-                  {result.url && (
-                    
-                      href={result.url}
-                      target="_blank"
+{result.url && (
+  <a                       
+    href={result.url}
+    target="_blank"
                       rel="noopener noreferrer"
                       className="inline-block mt-6 text-purple-600 hover:text-purple-800 font-semibold"
                     >
