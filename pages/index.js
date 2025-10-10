@@ -420,17 +420,17 @@ export default function Home() {
                     </div>
                   )}
 
-                  {/* Video Link */}
-                  {result.url && (
-                    
-                      href={result.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-block mt-6 text-purple-600 hover:text-purple-800 font-semibold"
-                    >
-                      🔗 Watch on TikTok →
-                    </a>
-                  )}
+          {/* Video Link */}
+{result.url && (
+  
+    href={result.url}
+    target="_blank"
+    rel="noopener noreferrer"
+    className="inline-block mt-6 text-purple-600 hover:text-purple-800 font-semibold"
+  >
+    🔗 Watch on TikTok →
+  </a>
+)}
                 </div>
               ))}
             </div>
