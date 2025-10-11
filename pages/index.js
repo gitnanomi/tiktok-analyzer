@@ -6,6 +6,8 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState([]);
   const [error, setError] = useState('');
+  const [demoMode, setDemoMode] = useState(false);
+  const [demoMessage, setDemoMessage] = useState('');
   const [mode, setMode] = useState(null);
   const [detailedView, setDetailedView] = useState({});
 
@@ -22,13 +24,15 @@ export default function Home() {
   };
 
   const handleAnalyze = async () => {
-    if (!input) {
+    if (!input.trim()) {
       setError('Please enter a TikTok URL or keywords');
       return;
     }
 
     setLoading(true);
     setError('');
+    setDemoMode(false);
+    setDemoMessage('');
     setMode(null);
     setDetailedView({});
 
@@ -36,18 +40,28 @@ export default function Home() {
       const response = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ input }),
+        body: JSON.stringify({ input: input.trim() }),
       });
 
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error);
       
-      setResults(data.results);
+      if (!response.ok) {
+        throw new Error(data.error || 'Analysis failed');
+      }
+      
+      setResults(data.results || []);
       setMode(data.mode);
-      setInput('');
+      setDemoMode(data.demo || false);
+      setDemoMessage(data.message || '');
+      
+      if (data.results && data.results.length > 0) {
+        setInput(''); // Only clear if successful
+      }
       
     } catch (err) {
-      setError(err.message);
+      console.error('Analysis error:', err);
+      setError(err.message || 'Failed to analyze. Please try again.');
+      setResults([]);
     } finally {
       setLoading(false);
     }
@@ -55,15 +69,15 @@ export default function Home() {
 
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text);
-    alert('Copied to clipboard!');
+    alert('✅ Copied to clipboard!');
   };
 
   const exportToCSV = () => {
     if (results.length === 0) return;
 
     const headers = [
-      'Author', 'Description', 'Views', 'Likes', 
-      'Content Type', 'Category', 'Hook Summary', 'Is Ad?', 'Success Factors'
+      'Author', 'Description', 'Views', 'Likes', 'Comments', 'Shares',
+      'Content Type', 'Category', 'Tone', 'Is Ad', 'Hook Summary', 'URL'
     ];
     
     const rows = results.map(r => [
@@ -71,15 +85,18 @@ export default function Home() {
       `"${(r.description || '').replace(/"/g, '""')}"`,
       r.views || 0,
       r.likes || 0,
+      r.comments || 0,
+      r.shares || 0,
       r.analysis?.contentType || '',
       r.analysis?.category || '',
-      `"${(r.analysis?.hook?.summary || '').replace(/"/g, '""').replace(/\n/g, ' ')}"`,
+      r.analysis?.tone || '',
       r.analysis?.isAd || '',
-      `"${(r.analysis?.successFactors || '').replace(/"/g, '""').replace(/\n/g, ' ')}"`,
+      `"${(r.analysis?.hook?.summary || '').replace(/"/g, '""').replace(/\n/g, ' | ')}"`,
+      r.url || ''
     ]);
 
     const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = `tiktok-analysis-${new Date().toISOString().split('T')[0]}.csv`;
@@ -96,12 +113,14 @@ export default function Home() {
             <span className="text-2xl">{emoji}</span>
             {title}
           </h3>
-          <button
-            onClick={() => toggleDetailedView(resultIdx, sectionKey)}
-            className="px-4 py-1.5 bg-white border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition text-sm font-semibold text-gray-700"
-          >
-            {showDetailed ? '📋 Summary' : '📖 Details'}
-          </button>
+          {detailedContent && (
+            <button
+              onClick={() => toggleDetailedView(resultIdx, sectionKey)}
+              className="px-4 py-1.5 bg-white border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition text-sm font-semibold text-gray-700"
+            >
+              {showDetailed ? '📋 Summary' : '📖 Details'}
+            </button>
+          )}
         </div>
         
         <div className="text-gray-800 leading-relaxed whitespace-pre-line">
@@ -151,13 +170,14 @@ export default function Home() {
                   type="text"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleAnalyze()}
+                  onKeyPress={(e) => e.key === 'Enter' && !loading && handleAnalyze()}
                   placeholder="Paste TikTok URL or enter keywords..."
                   className="flex-1 px-6 py-4 text-lg border-2 border-purple-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-400 focus:border-transparent"
+                  disabled={loading}
                 />
                 <button
                   onClick={handleAnalyze}
-                  disabled={loading || !input}
+                  disabled={loading || !input.trim()}
                   className="px-10 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-lg font-bold rounded-xl hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-105"
                 >
                   {loading ? '⏳ Analyzing...' : '🚀 Analyze'}
@@ -173,8 +193,16 @@ export default function Home() {
             </div>
             
             {error && (
-              <div className="mt-4 p-4 bg-red-50 border-2 border-red-300 rounded-xl text-red-700 font-medium">
-                ❌ {error}
+              <div className="mt-4 p-4 bg-red-50 border-2 border-red-300 rounded-xl text-red-700">
+                <div className="font-bold mb-1">❌ Error</div>
+                <div className="text-sm">{error}</div>
+              </div>
+            )}
+            
+            {demoMode && demoMessage && (
+              <div className="mt-4 p-4 bg-yellow-50 border-2 border-yellow-300 rounded-xl text-yellow-800">
+                <div className="font-bold mb-1">⚠️ Demo Mode</div>
+                <div className="text-sm">{demoMessage}</div>
               </div>
             )}
           </div>
@@ -185,7 +213,7 @@ export default function Home() {
                 <div key={idx} className="bg-white rounded-2xl shadow-2xl overflow-hidden">
                   
                   <div className="bg-gradient-to-r from-purple-100 to-pink-100 px-8 py-6 border-b-2 border-purple-200">
-                    <div className="flex items-start justify-between">
+                    <div className="flex items-start justify-between mb-3">
                       <div>
                         <h2 className="text-2xl font-black text-gray-900">
                           @{result.author}
@@ -195,6 +223,30 @@ export default function Home() {
                       {result.analysis?.isAd?.toLowerCase().includes('yes') && (
                         <span className="px-4 py-2 bg-yellow-400 text-yellow-900 text-sm font-bold rounded-full shadow-md">
                           💰 SPONSORED
+                        </span>
+                      )}
+                    </div>
+                    
+                    {/* Stats Row */}
+                    <div className="flex flex-wrap gap-3 text-sm">
+                      {result.views > 0 && (
+                        <span className="px-3 py-1 bg-blue-100 text-blue-900 rounded-full font-semibold">
+                          👁️ {(result.views / 1000000).toFixed(1)}M views
+                        </span>
+                      )}
+                      {result.likes > 0 && (
+                        <span className="px-3 py-1 bg-red-100 text-red-900 rounded-full font-semibold">
+                          ❤️ {(result.likes / 1000).toFixed(1)}K likes
+                        </span>
+                      )}
+                      {result.comments > 0 && (
+                        <span className="px-3 py-1 bg-green-100 text-green-900 rounded-full font-semibold">
+                          💬 {result.comments} comments
+                        </span>
+                      )}
+                      {result.shares > 0 && (
+                        <span className="px-3 py-1 bg-purple-100 text-purple-900 rounded-full font-semibold">
+                          🔄 {result.shares} shares
                         </span>
                       )}
                     </div>
@@ -366,17 +418,17 @@ export default function Home() {
 
                       <div className="border-t-2 border-gray-200 pt-6">
                         <div className="flex flex-wrap gap-3 mb-6">
-                          {result.analysis.contentType && (
+                          {result.analysis.contentType && result.analysis.contentType !== 'Unknown' && (
                             <span className="px-4 py-2 bg-purple-100 border border-purple-300 rounded-full text-sm font-semibold text-purple-900">
                               {result.analysis.contentType}
                             </span>
                           )}
-                          {result.analysis.category && (
+                          {result.analysis.category && result.analysis.category !== 'Unknown' && (
                             <span className="px-4 py-2 bg-blue-100 border border-blue-300 rounded-full text-sm font-semibold text-blue-900">
                               {result.analysis.category}
                             </span>
                           )}
-                          {result.analysis.tone && (
+                          {result.analysis.tone && result.analysis.tone !== 'Unknown' && (
                             <span className="px-4 py-2 bg-pink-100 border border-pink-300 rounded-full text-sm font-semibold text-pink-900">
                               {result.analysis.tone}
                             </span>
@@ -411,22 +463,14 @@ export default function Home() {
               </h2>
               <p className="text-gray-600 text-xl max-w-3xl mx-auto mb-8">
                 Paste a <span className="font-bold text-purple-600">TikTok URL</span> for single video deep dive,
-                or enter <span className="font-bold text-green-600">keywords</span> to analyze top viral videos
+                or enter <span className="font-bold text-green-600">keywords</span> to analyze trending videos
               </p>
-              <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-                <div className="bg-gradient-to-br from-blue-50 to-cyan-50 border-2 border-blue-300 p-8 rounded-xl">
-                  <div className="text-5xl mb-4">🔗</div>
-                  <h3 className="font-black text-xl text-gray-900 mb-3">URL Analysis</h3>
-                  <p className="text-gray-700 text-sm">
-                    Complete breakdown with scripting insights, visual analysis, and AI recreation prompts
-                  </p>
-                </div>
-                <div className="bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-300 p-8 rounded-xl">
-                  <div className="text-5xl mb-4">🔍</div>
-                  <h3 className="font-black text-xl text-gray-900 mb-3">Keyword Research</h3>
-                  <p className="text-gray-700 text-sm">
-                    Batch analysis of trending videos for competitive intelligence and market research
-                  </p>
+              <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-6 max-w-2xl mx-auto">
+                <div className="text-sm text-blue-900 font-medium mb-2">💡 Quick Setup</div>
+                <div className="text-xs text-blue-700 text-left space-y-1">
+                  <div>• For keyword search: Add <code className="bg-blue-100 px-2 py-0.5 rounded">APIFY_API_KEY</code> in Vercel</div>
+                  <div>• For AI analysis: Add <code className="bg-blue-100 px-2 py-0.5 rounded">GEMINI_API_KEY</code> in Vercel</div>
+                  <div>• Works without keys but shows demo data</div>
                 </div>
               </div>
             </div>
@@ -436,7 +480,7 @@ export default function Home() {
             <div className="bg-white rounded-2xl shadow-2xl p-16 text-center">
               <div className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-purple-200 border-t-purple-600 mb-6"></div>
               <p className="text-gray-700 text-2xl font-bold">Analyzing with AI...</p>
-              <p className="text-gray-500 mt-2">Generating dual-version analysis</p>
+              <p className="text-gray-500 mt-2">This may take 10-30 seconds</p>
             </div>
           )}
         </div>
