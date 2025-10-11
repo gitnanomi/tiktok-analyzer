@@ -138,70 +138,140 @@ async function analyzeWithGemini(video) {
   try {
     console.log('Calling Gemini API...');
     
-    const prompt = `You're analyzing TikTok content like a pro strategist. Write in plain English - NO asterisks, NO markdown symbols. Use numbered lists or paragraphs only.
+    const prompt = `You're analyzing TikTok content. Provide TWO versions for each section: SUMMARY (bullet points) and DETAILED (full paragraphs).
+
+CRITICAL FORMAT RULES:
+- NO asterisks anywhere
+- Use simple bullet points with "•" character
+- Each section must have both SUMMARY and DETAILED versions
+- SUMMARY: 2-4 bullet points max
+- DETAILED: 2-4 full sentences
 
 Video: "${video.title || video.description}" by @${video.author}
 
-Provide analysis using these EXACT sections:
+Provide analysis in this EXACT format:
 
 HOOK (First 3 Seconds)
-Describe the opening in 2-3 sentences. What visual action happens? What's said? Why does it stop the scroll?
+
+SUMMARY:
+- [First key point about the hook]
+- [Second key point]
+- [Third key point if needed]
+
+DETAILED:
+[Full 2-3 sentence paragraph explaining the hook in detail]
+
+---
 
 STORY LINE
-Explain the narrative arc in 2-3 sentences. How does tension build? What keeps viewers watching?
+
+SUMMARY:
+- [Main narrative point]
+- [How tension builds]
+- [Key engagement technique]
+
+DETAILED:
+[Full 2-3 sentence paragraph about the story arc]
+
+---
 
 SCRIPTING PROCESS
-Analyze how this video was likely structured before filming. Top creators work backwards: they lock in the IDEA first, then craft a strong HOOK, immediately plan the LAST LINE (the ending/reaction), and add FORESHADOWING right after the hook to set expectations. Explain how you see this structure in the video. Write 3-4 sentences about how the creator engineered this video from hook to ending.
+
+SUMMARY:
+- [How video was structured]
+- [Hook to ending approach]
+- [Key planning elements]
+
+DETAILED:
+[Full 2-3 sentence paragraph analyzing how the creator planned this video backwards - starting with the idea, locking in the hook, planning the ending/last line, and adding foreshadowing]
+
+---
 
 CALL TO ACTION (CTA)
-What action does the creator want? How is it set up? Write 2 sentences.
+
+SUMMARY:
+- [What action is requested]
+- [How it's set up]
+
+DETAILED:
+[Full 2 sentence paragraph about the CTA]
+
+---
 
 VISUAL ELEMENTS
-Camera work, editing, composition. Describe in 2-3 sentences.
+
+SUMMARY:
+- [Camera technique]
+- [Editing style]
+- [Key visual choices]
+
+DETAILED:
+[Full 2-3 sentence paragraph about visual production]
+
+---
 
 SUCCESS FACTORS
-List 3 reasons this video works. Write as numbered points without asterisks.
 
-CONTENT TYPE
-UGC-style / Faceless / Professional / Hybrid
+List exactly 3 reasons (no more, no less):
+1. [First reason]
+2. [Second reason]
+3. [Third reason]
 
-CATEGORY
-Tutorial / Review / Challenge / Vlog / Entertainment / Educational / Story
+---
 
-TONE
-High-Energy / Calm / Emotional / Humorous / Educational / Inspirational
+REPLICABLE ELEMENTS
 
-IS AD
-Yes / No (explain if yes)
+List exactly 3 tactics (no more, no less):
+1. [First tactic]
+2. [Second tactic]
+3. [Third tactic]
+
+---
+
+METADATA
+
+CONTENT TYPE: [UGC-style / Faceless / Professional / Hybrid]
+CATEGORY: [Tutorial / Review / Challenge / Vlog / Entertainment / Educational / Story]
+TONE: [High-Energy / Calm / Emotional / Humorous / Educational / Inspirational]
+IS AD: [Yes / No] - [brief explanation if yes]
+
+---
 
 AI PROMPT ENGINEERING
 
-STEP 1 - Reference Image Analysis
+MIDJOURNEY PROMPT:
+[Write a complete, detailed prompt describing the exact visual style, lighting, composition, camera angle, mood, color palette, and aesthetic. Make it 40-60 words and immediately usable in Midjourney. Be very specific about visual details like "shot on iPhone 14 Pro, natural window lighting from left side, warm color temperature 2700K, shallow depth of field f/1.8, subject in foreground sharp with blurred background, UGC authentic style"]
 
-Midjourney/DALL-E Prompt:
-[Detailed prompt for recreating visual style - subject, setting, lighting, color palette, camera angle, mood]
+STABLE DIFFUSION PROMPT:
+[Write the same concept but optimized for Stable Diffusion with technical terms: "photorealistic, 8k resolution, natural lighting, shallow depth of field, bokeh effect, professional color grading, cinematic composition, rule of thirds, golden hour lighting, soft shadows, high detail, sharp focus on subject"]
 
-Stable Diffusion Prompt:
-[Technical prompt with photorealistic, 8k, lighting specs, shallow depth of field, etc]
+PRODUCT SWAP TEMPLATE:
+[YOUR PRODUCT] in [specific setting from original video], [exact lighting description], [camera angle and framing], [mood and aesthetic style], [specific technical specs like shot on iPhone, color temp, etc]
 
-STEP 2 - Product Replacement Strategy
+EXAMPLE:
+[Give a concrete example with a real product category, like: "Skincare serum bottle in minimalist bathroom counter, soft morning light from window, overhead 45-degree angle, clean spa aesthetic, shot on iPhone 14, 3000K warm lighting, f/2.8 aperture, product centered with blurred marble background"]
 
-Product Swap Template:
-[YOUR PRODUCT] + [scene setting] + [lighting] + [camera style]
+SHOT BREAKDOWN:
 
-Example:
-[Specific example showing how to adapt template with a real product]
+Scene 1 (0-3s):
+Visual: [Describe exact first 3 seconds]
+AI Prompt: [Specific prompt for generating this exact shot]
 
-STEP 3 - Shot-by-Shot Breakdown
+Scene 2 (3-10s):
+Visual: [Describe middle section]
+AI Prompt: [Specific prompt for this shot]
 
-Scene 1 (0-3s): [First 3 seconds visual + AI prompt for this shot]
-Scene 2 (3-10s): [Middle section visual + AI prompt]
-Scene 3 (10-15s): [Ending visual + AI prompt]
+Scene 3 (10-15s):
+Visual: [Describe ending]
+AI Prompt: [Specific prompt for final shot]
 
-REPLICABLE ELEMENTS
-List 3 tactics marketers can steal. Write as numbered points without asterisks.
+---
 
-Remember: NO asterisks. Write concisely. Each section should be 2-4 sentences max except the numbered lists.`;
+Remember: 
+- NO asterisks
+- Use bullet points with "•"
+- Provide both SUMMARY and DETAILED for each main section
+- AI prompts must be complete and immediately usable, not templates`;
 
     const response = await axios.post(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
@@ -224,7 +294,7 @@ Remember: NO asterisks. Write concisely. Each section should be 2-4 sentences ma
 
     const text = response.data.candidates[0].content.parts[0].text;
     console.log('Gemini success! Length:', text.length);
-    return parseDetailedAnalysis(text);
+    return parseDualVersionAnalysis(text);
     
   } catch (error) {
     console.error('Gemini error:', error.message);
@@ -235,62 +305,65 @@ Remember: NO asterisks. Write concisely. Each section should be 2-4 sentences ma
   }
 }
 
-function parseDetailedAnalysis(text) {
-  const extractSection = (header) => {
-    const patterns = [
-      new RegExp(`${header}[:\\s]*([\\s\\S]*?)(?=\\n\\n[A-Z][A-Z]|$)`, 'i'),
-      new RegExp(`${header}\\n([\\s\\S]*?)(?=\\n\\n[A-Z]|$)`, 'i')
-    ];
+function parseDualVersionAnalysis(text) {
+  const extractDualVersion = (sectionName) => {
+    const sectionRegex = new RegExp(`${sectionName}[\\s\\S]*?SUMMARY:[\\s\\S]*?([\\s\\S]*?)(?=DETAILED:|$)`, 'i');
+    const detailedRegex = new RegExp(`${sectionName}[\\s\\S]*?DETAILED:[\\s\\S]*?([\\s\\S]*?)(?=---|$)`, 'i');
     
-    for (const regex of patterns) {
-      const match = text.match(regex);
-      if (match) return match[1].trim();
-    }
-    return '';
+    const summaryMatch = text.match(sectionRegex);
+    const detailedMatch = text.match(detailedRegex);
+    
+    return {
+      summary: summaryMatch ? summaryMatch[1].trim() : '',
+      detailed: detailedMatch ? detailedMatch[1].trim() : ''
+    };
   };
 
-  const extractField = (field) => {
-    const regex = new RegExp(`${field}[:\\s]*(.+?)(?=\\n|$)`, 'i');
+  const extractList = (header) => {
+    const regex = new RegExp(`${header}[\\s\\S]*?([\\s\\S]*?)(?=---|METADATA|AI PROMPT|$)`, 'i');
+    const match = text.match(regex);
+    return match ? match[1].trim() : '';
+  };
+
+  const extractMetadata = (field) => {
+    const regex = new RegExp(`${field}:[\\s]*([^\\n]+)`, 'i');
     const match = text.match(regex);
     return match ? match[1].trim() : 'Not specified';
   };
 
-  // Extract AI prompts - Step 1
-  const mjMatch = text.match(/Midjourney\/DALL-E Prompt:[\s\S]*?\n([\s\S]*?)(?=Stable Diffusion|$)/i);
-  const sdMatch = text.match(/Stable Diffusion Prompt:[\s\S]*?\n([\s\S]*?)(?=STEP 2|Product Swap|$)/i);
-  
-  // Extract AI prompts - Step 2
-  const templateMatch = text.match(/Product Swap Template:[\s\S]*?\n([\s\S]*?)(?=Example:|$)/i);
-  const exampleMatch = text.match(/Example:[\s\S]*?\n([\s\S]*?)(?=STEP 3|$)/i);
-  
-  // Extract AI prompts - Step 3
-  const step3Match = text.match(/STEP 3[\s\S]*?Breakdown[\s\S]*?\n([\s\S]*?)(?=REPLICABLE|$)/i);
+  const extractAIPrompt = (promptName) => {
+    const regex = new RegExp(`${promptName}:[\\s\\S]*?\\n([\\s\\S]*?)(?=\\n\\n[A-Z]|SHOT BREAKDOWN|$)`, 'i');
+    const match = text.match(regex);
+    return match ? match[1].trim().replace(/^\[|\]$/g, '') : '';
+  };
+
+  const extractShotBreakdown = () => {
+    const regex = /SHOT BREAKDOWN:[\s\S]*?(Scene 1[\s\S]*?)(?=---|$)/i;
+    const match = text.match(regex);
+    return match ? match[1].trim() : '';
+  };
 
   return {
-    hook: extractSection('HOOK \\(First 3 Seconds\\)') || extractSection('HOOK'),
-    storyLine: extractSection('STORY LINE'),
-    scriptingProcess: extractSection('SCRIPTING PROCESS'),
-    cta: extractSection('CALL TO ACTION \\(CTA\\)') || extractSection('CALL TO ACTION'),
-    visualElements: extractSection('VISUAL ELEMENTS'),
-    successFactors: extractSection('SUCCESS FACTORS'),
-    contentType: extractField('CONTENT TYPE'),
-    category: extractField('CATEGORY'),
-    tone: extractField('TONE'),
-    isAd: extractField('IS AD'),
-    replicableElements: extractSection('REPLICABLE ELEMENTS'),
+    hook: extractDualVersion('HOOK \\(First 3 Seconds\\)'),
+    storyLine: extractDualVersion('STORY LINE'),
+    scriptingProcess: extractDualVersion('SCRIPTING PROCESS'),
+    cta: extractDualVersion('CALL TO ACTION'),
+    visualElements: extractDualVersion('VISUAL ELEMENTS'),
+    
+    successFactors: extractList('SUCCESS FACTORS'),
+    replicableElements: extractList('REPLICABLE ELEMENTS'),
+    
+    contentType: extractMetadata('CONTENT TYPE'),
+    category: extractMetadata('CATEGORY'),
+    tone: extractMetadata('TONE'),
+    isAd: extractMetadata('IS AD'),
     
     aiPrompts: {
-      step1: {
-        midjourneyPrompt: mjMatch ? mjMatch[1].trim().replace(/^\[|\]$/g, '').replace(/^"|"$/g, '') : '',
-        stableDiffusionPrompt: sdMatch ? sdMatch[1].trim().replace(/^\[|\]$/g, '').replace(/^"|"$/g, '') : ''
-      },
-      step2: {
-        template: templateMatch ? templateMatch[1].trim().replace(/^"|"$/g, '') : '',
-        example: exampleMatch ? exampleMatch[1].trim() : ''
-      },
-      step3: {
-        breakdown: step3Match ? step3Match[1].trim() : ''
-      }
+      midjourney: extractAIPrompt('MIDJOURNEY PROMPT'),
+      stableDiffusion: extractAIPrompt('STABLE DIFFUSION PROMPT'),
+      productTemplate: extractAIPrompt('PRODUCT SWAP TEMPLATE'),
+      example: extractAIPrompt('EXAMPLE'),
+      shotBreakdown: extractShotBreakdown()
     },
     
     fullText: text
@@ -299,29 +372,38 @@ function parseDetailedAnalysis(text) {
 
 function getBasicAnalysis(video) {
   return {
-    hook: `Analyzing: "${video.title || video.description}"`,
-    storyLine: 'Add GEMINI_API_KEY for full analysis',
-    scriptingProcess: 'Add GEMINI_API_KEY for scripting process analysis',
-    cta: 'Add GEMINI_API_KEY for full analysis',
-    visualElements: 'Add GEMINI_API_KEY for full analysis',
-    successFactors: 'Add GEMINI_API_KEY to unlock detailed breakdown',
+    hook: {
+      summary: '• Add GEMINI_API_KEY for analysis\n• Limited data available',
+      detailed: 'Add GEMINI_API_KEY in Vercel environment variables to unlock full AI-powered analysis.'
+    },
+    storyLine: {
+      summary: '• Add GEMINI_API_KEY for analysis',
+      detailed: 'Add GEMINI_API_KEY for detailed story analysis.'
+    },
+    scriptingProcess: {
+      summary: '• Add GEMINI_API_KEY for analysis',
+      detailed: 'Add GEMINI_API_KEY for scripting process analysis.'
+    },
+    cta: {
+      summary: '• Add GEMINI_API_KEY for analysis',
+      detailed: 'Add GEMINI_API_KEY for CTA analysis.'
+    },
+    visualElements: {
+      summary: '• Add GEMINI_API_KEY for analysis',
+      detailed: 'Add GEMINI_API_KEY for visual analysis.'
+    },
+    successFactors: '1. Add GEMINI_API_KEY\n2. To unlock analysis\n3. Full features available',
+    replicableElements: '1. Add API keys\n2. Get insights\n3. Export data',
     contentType: 'Unknown',
     category: 'Unknown',
     tone: 'Unknown',
     isAd: 'Unknown',
-    replicableElements: 'Add GEMINI_API_KEY to see actionable insights',
     aiPrompts: {
-      step1: {
-        midjourneyPrompt: 'Add GEMINI_API_KEY for AI prompts',
-        stableDiffusionPrompt: 'Add GEMINI_API_KEY for AI prompts'
-      },
-      step2: {
-        template: 'Add GEMINI_API_KEY for templates',
-        example: ''
-      },
-      step3: {
-        breakdown: ''
-      }
+      midjourney: 'Add GEMINI_API_KEY for AI prompts',
+      stableDiffusion: 'Add GEMINI_API_KEY for AI prompts',
+      productTemplate: 'Add GEMINI_API_KEY for templates',
+      example: 'Add GEMINI_API_KEY for examples',
+      shotBreakdown: 'Add GEMINI_API_KEY for shot breakdown'
     }
   };
 }
@@ -378,29 +460,38 @@ function getDemoResults(keywords) {
       comments: 200,
       shares: 100,
       analysis: {
-        hook: 'Demo mode - Add GEMINI_API_KEY for real analysis',
-        storyLine: 'This is sample data showing what you will get',
-        scriptingProcess: 'Add GEMINI_API_KEY for scripting analysis',
-        cta: 'Add API keys to unlock full features',
-        visualElements: 'Real analysis will show detailed visual breakdown',
-        successFactors: 'Add GEMINI_API_KEY to see why videos go viral',
-        contentType: 'UGC',
+        hook: {
+          summary: '• Quick visual intro\n• Direct address to viewer\n• Curiosity trigger',
+          detailed: 'The hook uses a fast-paced visual cut combined with direct eye contact and a question that creates immediate curiosity about the outcome.'
+        },
+        storyLine: {
+          summary: '• Problem presentation\n• Journey through struggle\n• Resolution setup',
+          detailed: 'The narrative builds by showing relatable challenges, taking viewers through the emotional journey, and setting up anticipation for the solution.'
+        },
+        scriptingProcess: {
+          summary: '• Idea validated first\n• Hook and ending planned\n• Foreshadowing added',
+          detailed: 'This video was structured backwards - the creator locked in the core idea, crafted a strong hook, planned the final reaction shot, then added foreshadowing to set viewer expectations.'
+        },
+        cta: {
+          summary: '• Link in bio mention\n• Comment engagement request',
+          detailed: 'The CTA is implicit through the final statement and explicit with a "link in bio" call during the closing moment.'
+        },
+        visualElements: {
+          summary: '• Selfie camera style\n• Natural lighting\n• Fast cuts for pacing',
+          detailed: 'Shot primarily in selfie mode with natural lighting, using quick cuts to maintain energy and authentic UGC aesthetic throughout.'
+        },
+        successFactors: '1. Strong pattern interrupt in first 3 seconds\n2. Relatable pain point that resonates with target audience\n3. Clear payoff that delivers on the hook promise',
+        replicableElements: '1. Use direct-to-camera address in opening\n2. Build curiosity gap between hook and resolution\n3. End abruptly after delivering value',
+        contentType: 'UGC-style',
         category: 'Tutorial',
         tone: 'Educational',
         isAd: 'No',
-        replicableElements: 'Add API keys to see actionable insights',
         aiPrompts: {
-          step1: {
-            midjourneyPrompt: 'Add GEMINI_API_KEY for AI prompts',
-            stableDiffusionPrompt: 'Add GEMINI_API_KEY for AI prompts'
-          },
-          step2: {
-            template: 'Add API keys to unlock',
-            example: ''
-          },
-          step3: {
-            breakdown: ''
-          }
+          midjourney: 'Close-up selfie shot of person in natural home setting, soft window lighting from left, warm color temperature, authentic UGC style, shot on iPhone, slightly grainy texture, shallow depth of field, casual background blur',
+          stableDiffusion: 'photorealistic portrait, 8k resolution, natural window lighting, shallow depth of field f/1.8, bokeh background, warm color grading, UGC authentic style, high detail on face, soft shadows, iPhone photography aesthetic',
+          productTemplate: '[YOUR PRODUCT] held in hand or placed on surface, natural home lighting from window, close-up shot 45-degree angle, warm authentic vibe, shot on iPhone 14, 2700K color temp, f/2.2 aperture, UGC style with natural background',
+          example: 'Skincare serum bottle on bathroom counter, morning natural light from window, overhead 45-degree shot, clean minimalist aesthetic, shot on iPhone 14 Pro, 3000K lighting, f/2.8, marble background softly blurred',
+          shotBreakdown: 'Scene 1 (0-3s): Direct eye contact selfie, question posed\nAI Prompt: Close-up portrait, direct gaze, natural lighting, questioning expression\n\nScene 2 (3-10s): Product demonstration, hands in frame\nAI Prompt: Medium shot showing hands with product, natural setting\n\nScene 3 (10-15s): Final result or reaction\nAI Prompt: Same framing as opening, satisfied expression, natural conclusion'
         }
       }
     }
