@@ -7,18 +7,18 @@ export default function Home() {
   const [results, setResults] = useState([]);
   const [error, setError] = useState('');
   const [mode, setMode] = useState(null);
-  const [expandedSections, setExpandedSections] = useState({});
+  const [detailedView, setDetailedView] = useState({});
 
-  const toggleSection = (resultIdx, section) => {
+  const toggleDetailedView = (resultIdx, section) => {
     const key = `${resultIdx}-${section}`;
-    setExpandedSections(prev => ({
+    setDetailedView(prev => ({
       ...prev,
       [key]: !prev[key]
     }));
   };
 
-  const isSectionExpanded = (resultIdx, section) => {
-    return expandedSections[`${resultIdx}-${section}`] || false;
+  const isDetailedViewActive = (resultIdx, section) => {
+    return detailedView[`${resultIdx}-${section}`] || false;
   };
 
   const handleAnalyze = async () => {
@@ -30,7 +30,7 @@ export default function Home() {
     setLoading(true);
     setError('');
     setMode(null);
-    setExpandedSections({});
+    setDetailedView({});
 
     try {
       const response = await fetch('/api/analyze', {
@@ -63,7 +63,7 @@ export default function Home() {
 
     const headers = [
       'Author', 'Description', 'Views', 'Likes', 
-      'Content Type', 'Category', 'Hook', 'Is Ad?', 'Success Factors'
+      'Content Type', 'Category', 'Hook Summary', 'Is Ad?', 'Success Factors'
     ];
     
     const rows = results.map(r => [
@@ -73,9 +73,9 @@ export default function Home() {
       r.likes || 0,
       r.analysis?.contentType || '',
       r.analysis?.category || '',
-      `"${(r.analysis?.hook || '').replace(/"/g, '""')}"`,
+      `"${(r.analysis?.hook?.summary || '').replace(/"/g, '""').replace(/\n/g, ' ')}"`,
       r.analysis?.isAd || '',
-      `"${(r.analysis?.successFactors || '').replace(/"/g, '""')}"`,
+      `"${(r.analysis?.successFactors || '').replace(/"/g, '""').replace(/\n/g, ' ')}"`,
     ]);
 
     const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
@@ -86,30 +86,27 @@ export default function Home() {
     link.click();
   };
 
-  const CollapsibleSection = ({ title, emoji, content, resultIdx, sectionKey, bgGradient, borderColor }) => {
-    const isExpanded = isSectionExpanded(resultIdx, sectionKey);
+  const SectionCard = ({ title, emoji, summaryContent, detailedContent, resultIdx, sectionKey, bgColor }) => {
+    const showDetailed = isDetailedViewActive(resultIdx, sectionKey);
     
     return (
-      <div className={`${bgGradient} border-2 ${borderColor} rounded-xl overflow-hidden`}>
-        <button
-          onClick={() => toggleSection(resultIdx, sectionKey)}
-          className="w-full px-6 py-4 flex items-center justify-between hover:bg-white/30 transition"
-        >
-          <div className="flex items-center gap-3">
+      <div className={`${bgColor} rounded-xl p-6 border-2 border-gray-200`}>
+        <div className="flex items-start justify-between mb-4">
+          <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
             <span className="text-2xl">{emoji}</span>
-            <h3 className="text-lg font-bold text-gray-900">{title}</h3>
-          </div>
-          <span className="text-2xl text-gray-600">
-            {isExpanded ? '−' : '+'}
-          </span>
-        </button>
-        {isExpanded && (
-          <div className="px-6 py-4 bg-white/50 border-t-2 border-white/50">
-            <div className="text-gray-800 leading-relaxed whitespace-pre-line">
-              {content}
-            </div>
-          </div>
-        )}
+            {title}
+          </h3>
+          <button
+            onClick={() => toggleDetailedView(resultIdx, sectionKey)}
+            className="px-4 py-1.5 bg-white border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition text-sm font-semibold text-gray-700"
+          >
+            {showDetailed ? '📋 Summary' : '📖 Details'}
+          </button>
+        </div>
+        
+        <div className="text-gray-800 leading-relaxed whitespace-pre-line">
+          {showDetailed ? detailedContent : summaryContent}
+        </div>
       </div>
     );
   };
@@ -148,22 +145,31 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           
           <div className="bg-white rounded-2xl shadow-2xl p-8 mb-8">
-            <div className="flex gap-4 mb-2">
-              <input
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleAnalyze()}
-                placeholder="🔗 Paste TikTok URL or 🔍 Enter keywords..."
-                className="flex-1 px-6 py-4 text-lg border-2 border-purple-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-400 focus:border-transparent"
-              />
-              <button
-                onClick={handleAnalyze}
-                disabled={loading || !input}
-                className="px-10 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-lg font-bold rounded-xl hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-105"
-              >
-                {loading ? '⏳ Analyzing...' : '🚀 Analyze'}
-              </button>
+            <div className="mb-4">
+              <div className="flex gap-4 mb-3">
+                <input
+                  type="text"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleAnalyze()}
+                  placeholder="Paste TikTok URL or enter keywords..."
+                  className="flex-1 px-6 py-4 text-lg border-2 border-purple-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-400 focus:border-transparent"
+                />
+                <button
+                  onClick={handleAnalyze}
+                  disabled={loading || !input}
+                  className="px-10 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-lg font-bold rounded-xl hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-105"
+                >
+                  {loading ? '⏳ Analyzing...' : '🚀 Analyze'}
+                </button>
+              </div>
+              
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <span className="px-3 py-1 bg-blue-100 rounded-full font-medium">🔗 URL Mode</span>
+                <span className="text-gray-400">or</span>
+                <span className="px-3 py-1 bg-green-100 rounded-full font-medium">🔍 Keyword Mode</span>
+                <span className="text-gray-500 ml-2">← Both work! Paste a link or search by keywords</span>
+              </div>
             </div>
             
             {error && (
@@ -195,203 +201,190 @@ export default function Home() {
                   </div>
 
                   {result.analysis && (
-                    <div className="p-8 space-y-4">
+                    <div className="p-8 space-y-5">
                       
                       {result.analysis.hook && (
-                        <CollapsibleSection
+                        <SectionCard
                           title="Hook (First 3 Seconds)"
                           emoji="🎣"
-                          content={result.analysis.hook}
+                          summaryContent={result.analysis.hook.summary}
+                          detailedContent={result.analysis.hook.detailed}
                           resultIdx={idx}
                           sectionKey="hook"
-                          bgGradient="bg-gradient-to-r from-red-50 to-orange-50"
-                          borderColor="border-red-300"
+                          bgColor="bg-gradient-to-r from-red-50 to-orange-50"
                         />
                       )}
 
                       {result.analysis.storyLine && (
-                        <CollapsibleSection
+                        <SectionCard
                           title="Story Line"
                           emoji="📖"
-                          content={result.analysis.storyLine}
+                          summaryContent={result.analysis.storyLine.summary}
+                          detailedContent={result.analysis.storyLine.detailed}
                           resultIdx={idx}
                           sectionKey="story"
-                          bgGradient="bg-gradient-to-r from-purple-50 to-pink-50"
-                          borderColor="border-purple-300"
+                          bgColor="bg-gradient-to-r from-purple-50 to-pink-50"
                         />
                       )}
 
                       {result.analysis.scriptingProcess && (
-                        <CollapsibleSection
+                        <SectionCard
                           title="Scripting Process"
                           emoji="📝"
-                          content={result.analysis.scriptingProcess}
+                          summaryContent={result.analysis.scriptingProcess.summary}
+                          detailedContent={result.analysis.scriptingProcess.detailed}
                           resultIdx={idx}
                           sectionKey="scripting"
-                          bgGradient="bg-gradient-to-r from-indigo-50 to-blue-50"
-                          borderColor="border-indigo-300"
+                          bgColor="bg-gradient-to-r from-indigo-50 to-blue-50"
                         />
                       )}
 
                       {result.analysis.cta && (
-                        <CollapsibleSection
+                        <SectionCard
                           title="Call to Action (CTA)"
                           emoji="👉"
-                          content={result.analysis.cta}
+                          summaryContent={result.analysis.cta.summary}
+                          detailedContent={result.analysis.cta.detailed}
                           resultIdx={idx}
                           sectionKey="cta"
-                          bgGradient="bg-gradient-to-r from-green-50 to-emerald-50"
-                          borderColor="border-green-300"
+                          bgColor="bg-gradient-to-r from-green-50 to-emerald-50"
                         />
                       )}
 
                       {result.analysis.visualElements && (
-                        <CollapsibleSection
+                        <SectionCard
                           title="Visual Elements"
                           emoji="🎥"
-                          content={result.analysis.visualElements}
+                          summaryContent={result.analysis.visualElements.summary}
+                          detailedContent={result.analysis.visualElements.detailed}
                           resultIdx={idx}
                           sectionKey="visual"
-                          bgGradient="bg-gradient-to-r from-blue-50 to-cyan-50"
-                          borderColor="border-blue-300"
+                          bgColor="bg-gradient-to-r from-blue-50 to-cyan-50"
                         />
                       )}
 
                       {result.analysis.successFactors && (
-                        <CollapsibleSection
-                          title="Success Factors"
-                          emoji="🔥"
-                          content={result.analysis.successFactors}
-                          resultIdx={idx}
-                          sectionKey="success"
-                          bgGradient="bg-gradient-to-r from-orange-50 to-red-50"
-                          borderColor="border-orange-300"
-                        />
+                        <div className="bg-gradient-to-r from-orange-50 to-red-50 rounded-xl p-6 border-2 border-gray-200">
+                          <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2 mb-4">
+                            <span className="text-2xl">🔥</span>
+                            Success Factors
+                          </h3>
+                          <div className="text-gray-800 leading-relaxed whitespace-pre-line">
+                            {result.analysis.successFactors}
+                          </div>
+                        </div>
                       )}
 
-                      {result.analysis.aiPrompts && (result.analysis.aiPrompts.step1?.midjourneyPrompt || result.analysis.aiPrompts.step1?.stableDiffusionPrompt) && (
-                        <div className="border-2 border-purple-300 rounded-xl overflow-hidden">
-                          <button
-                            onClick={() => toggleSection(idx, 'ai')}
-                            className="w-full px-6 py-4 bg-gradient-to-r from-purple-100 to-pink-100 flex items-center justify-between hover:from-purple-200 hover:to-pink-200 transition"
-                          >
-                            <div className="flex items-center gap-3">
-                              <span className="text-2xl">🤖</span>
-                              <h3 className="text-lg font-bold text-gray-900">AI Prompt Engineering</h3>
-                            </div>
-                            <span className="text-2xl text-gray-600">
-                              {isSectionExpanded(idx, 'ai') ? '−' : '+'}
-                            </span>
-                          </button>
+                      {result.analysis.aiPrompts && (result.analysis.aiPrompts.midjourney || result.analysis.aiPrompts.stableDiffusion) && (
+                        <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-6 border-2 border-purple-300">
+                          <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2 mb-5">
+                            <span className="text-2xl">🤖</span>
+                            AI Prompt Engineering
+                          </h3>
                           
-                          {isSectionExpanded(idx, 'ai') && (
-                            <div className="p-6 bg-gradient-to-br from-purple-50 to-pink-50 space-y-5">
-                              
-                              {result.analysis.aiPrompts.step1?.midjourneyPrompt && (
-                                <div className="bg-white p-5 rounded-lg border-2 border-purple-200 shadow-sm">
-                                  <div className="flex items-center justify-between mb-3">
-                                    <span className="font-bold text-gray-900">📸 Midjourney/DALL-E Prompt</span>
-                                    <button
-                                      onClick={() => copyToClipboard(result.analysis.aiPrompts.step1.midjourneyPrompt)}
-                                      className="px-4 py-1.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition text-sm font-medium"
-                                    >
-                                      Copy
-                                    </button>
-                                  </div>
-                                  <div className="bg-gray-50 p-4 rounded border border-purple-200 font-mono text-sm">
-                                    {result.analysis.aiPrompts.step1.midjourneyPrompt}
-                                  </div>
+                          <div className="space-y-4">
+                            
+                            {result.analysis.aiPrompts.midjourney && (
+                              <div className="bg-white p-5 rounded-lg border-2 border-purple-200 shadow-sm">
+                                <div className="flex items-center justify-between mb-3">
+                                  <span className="font-bold text-gray-900">📸 Midjourney/DALL-E</span>
+                                  <button
+                                    onClick={() => copyToClipboard(result.analysis.aiPrompts.midjourney)}
+                                    className="px-4 py-1.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition text-sm font-medium"
+                                  >
+                                    Copy
+                                  </button>
                                 </div>
-                              )}
+                                <div className="bg-gray-50 p-4 rounded border border-purple-200 text-sm leading-relaxed">
+                                  {result.analysis.aiPrompts.midjourney}
+                                </div>
+                              </div>
+                            )}
 
-                              {result.analysis.aiPrompts.step1?.stableDiffusionPrompt && (
-                                <div className="bg-white p-5 rounded-lg border-2 border-blue-200 shadow-sm">
-                                  <div className="flex items-center justify-between mb-3">
-                                    <span className="font-bold text-gray-900">🎨 Stable Diffusion Prompt</span>
-                                    <button
-                                      onClick={() => copyToClipboard(result.analysis.aiPrompts.step1.stableDiffusionPrompt)}
-                                      className="px-4 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium"
-                                    >
-                                      Copy
-                                    </button>
-                                  </div>
-                                  <div className="bg-gray-50 p-4 rounded border border-blue-200 font-mono text-sm">
-                                    {result.analysis.aiPrompts.step1.stableDiffusionPrompt}
-                                  </div>
+                            {result.analysis.aiPrompts.stableDiffusion && (
+                              <div className="bg-white p-5 rounded-lg border-2 border-blue-200 shadow-sm">
+                                <div className="flex items-center justify-between mb-3">
+                                  <span className="font-bold text-gray-900">🎨 Stable Diffusion</span>
+                                  <button
+                                    onClick={() => copyToClipboard(result.analysis.aiPrompts.stableDiffusion)}
+                                    className="px-4 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium"
+                                  >
+                                    Copy
+                                  </button>
                                 </div>
-                              )}
+                                <div className="bg-gray-50 p-4 rounded border border-blue-200 text-sm leading-relaxed">
+                                  {result.analysis.aiPrompts.stableDiffusion}
+                                </div>
+                              </div>
+                            )}
 
-                              {result.analysis.aiPrompts.step2?.template && (
-                                <div className="bg-white p-5 rounded-lg border-2 border-yellow-200 shadow-sm">
-                                  <div className="flex items-center justify-between mb-3">
-                                    <span className="font-bold text-gray-900">🔄 Product Swap Template</span>
-                                    <button
-                                      onClick={() => copyToClipboard(result.analysis.aiPrompts.step2.template)}
-                                      className="px-4 py-1.5 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition text-sm font-medium"
-                                    >
-                                      Copy
-                                    </button>
-                                  </div>
-                                  <div className="bg-gray-50 p-4 rounded border border-yellow-200 font-mono text-sm mb-3">
-                                    {result.analysis.aiPrompts.step2.template}
-                                  </div>
-                                  {result.analysis.aiPrompts.step2.example && (
-                                    <div className="text-sm text-gray-700 bg-yellow-50 p-3 rounded border border-yellow-100">
-                                      <span className="font-bold">Example:</span> {result.analysis.aiPrompts.step2.example}
-                                    </div>
-                                  )}
+                            {result.analysis.aiPrompts.productTemplate && (
+                              <div className="bg-white p-5 rounded-lg border-2 border-yellow-200 shadow-sm">
+                                <div className="flex items-center justify-between mb-3">
+                                  <span className="font-bold text-gray-900">🔄 Product Swap Template</span>
+                                  <button
+                                    onClick={() => copyToClipboard(result.analysis.aiPrompts.productTemplate)}
+                                    className="px-4 py-1.5 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition text-sm font-medium"
+                                  >
+                                    Copy
+                                  </button>
                                 </div>
-                              )}
+                                <div className="bg-gray-50 p-4 rounded border border-yellow-200 text-sm leading-relaxed mb-3">
+                                  {result.analysis.aiPrompts.productTemplate}
+                                </div>
+                                {result.analysis.aiPrompts.example && (
+                                  <div className="bg-yellow-50 p-3 rounded border border-yellow-100 text-sm">
+                                    <span className="font-bold">Example:</span> {result.analysis.aiPrompts.example}
+                                  </div>
+                                )}
+                              </div>
+                            )}
 
-                              {result.analysis.aiPrompts.step3?.breakdown && (
-                                <div className="bg-white p-5 rounded-lg border-2 border-green-200 shadow-sm">
-                                  <div className="font-bold text-gray-900 mb-3">🎬 Shot-by-Shot Breakdown</div>
-                                  <div className="text-sm text-gray-800 whitespace-pre-line">
-                                    {result.analysis.aiPrompts.step3.breakdown}
-                                  </div>
+                            {result.analysis.aiPrompts.shotBreakdown && (
+                              <div className="bg-white p-5 rounded-lg border-2 border-green-200 shadow-sm">
+                                <div className="font-bold text-gray-900 mb-3">🎬 Shot-by-Shot Breakdown</div>
+                                <div className="text-sm text-gray-800 whitespace-pre-line leading-relaxed">
+                                  {result.analysis.aiPrompts.shotBreakdown}
                                 </div>
-                              )}
-                            </div>
-                          )}
+                              </div>
+                            )}
+                          </div>
                         </div>
                       )}
 
                       {result.analysis.replicableElements && (
-                        <CollapsibleSection
-                          title="Replicable Elements"
-                          emoji="⚡"
-                          content={result.analysis.replicableElements}
-                          resultIdx={idx}
-                          sectionKey="replicable"
-                          bgGradient="bg-gradient-to-r from-green-50 to-teal-50"
-                          borderColor="border-green-300"
-                        />
+                        <div className="bg-gradient-to-r from-green-50 to-teal-50 rounded-xl p-6 border-2 border-gray-200">
+                          <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2 mb-4">
+                            <span className="text-2xl">⚡</span>
+                            Replicable Elements
+                          </h3>
+                          <div className="text-gray-800 leading-relaxed whitespace-pre-line">
+                            {result.analysis.replicableElements}
+                          </div>
+                        </div>
                       )}
 
-                      <div className="border-t-2 border-gray-200 pt-6 mt-6">
+                      <div className="border-t-2 border-gray-200 pt-6">
                         <div className="flex flex-wrap gap-3 mb-6">
                           {result.analysis.contentType && (
-                            <div className="px-4 py-2 bg-purple-100 border border-purple-300 rounded-full text-sm">
-                              <span className="font-bold text-purple-900">Type:</span>{' '}
-                              <span className="text-purple-700">{result.analysis.contentType}</span>
-                            </div>
+                            <span className="px-4 py-2 bg-purple-100 border border-purple-300 rounded-full text-sm font-semibold text-purple-900">
+                              {result.analysis.contentType}
+                            </span>
                           )}
                           {result.analysis.category && (
-                            <div className="px-4 py-2 bg-blue-100 border border-blue-300 rounded-full text-sm">
-                              <span className="font-bold text-blue-900">Category:</span>{' '}
-                              <span className="text-blue-700">{result.analysis.category}</span>
-                            </div>
+                            <span className="px-4 py-2 bg-blue-100 border border-blue-300 rounded-full text-sm font-semibold text-blue-900">
+                              {result.analysis.category}
+                            </span>
                           )}
                           {result.analysis.tone && (
-                            <div className="px-4 py-2 bg-pink-100 border border-pink-300 rounded-full text-sm">
-                              <span className="font-bold text-pink-900">Tone:</span>{' '}
-                              <span className="text-pink-700">{result.analysis.tone}</span>
-                            </div>
+                            <span className="px-4 py-2 bg-pink-100 border border-pink-300 rounded-full text-sm font-semibold text-pink-900">
+                              {result.analysis.tone}
+                            </span>
                           )}
                         </div>
 
                         {result.url && (
-                            <a                      
+                          <a
                             href={result.url}
                             target="_blank"
                             rel="noopener noreferrer"
@@ -417,15 +410,33 @@ export default function Home() {
                 Analyze Any TikTok Video
               </h2>
               <p className="text-gray-600 text-xl max-w-3xl mx-auto mb-8">
-                Deep analysis with scripting insights, visual breakdown, and AI recreation prompts
+                Paste a <span className="font-bold text-purple-600">TikTok URL</span> for single video deep dive,
+                or enter <span className="font-bold text-green-600">keywords</span> to analyze top viral videos
               </p>
+              <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                <div className="bg-gradient-to-br from-blue-50 to-cyan-50 border-2 border-blue-300 p-8 rounded-xl">
+                  <div className="text-5xl mb-4">🔗</div>
+                  <h3 className="font-black text-xl text-gray-900 mb-3">URL Analysis</h3>
+                  <p className="text-gray-700 text-sm">
+                    Complete breakdown with scripting insights, visual analysis, and AI recreation prompts
+                  </p>
+                </div>
+                <div className="bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-300 p-8 rounded-xl">
+                  <div className="text-5xl mb-4">🔍</div>
+                  <h3 className="font-black text-xl text-gray-900 mb-3">Keyword Research</h3>
+                  <p className="text-gray-700 text-sm">
+                    Batch analysis of trending videos for competitive intelligence and market research
+                  </p>
+                </div>
+              </div>
             </div>
           )}
 
           {loading && (
             <div className="bg-white rounded-2xl shadow-2xl p-16 text-center">
               <div className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-purple-200 border-t-purple-600 mb-6"></div>
-              <p className="text-gray-700 text-2xl font-bold">Analyzing video...</p>
+              <p className="text-gray-700 text-2xl font-bold">Analyzing with AI...</p>
+              <p className="text-gray-500 mt-2">Generating dual-version analysis</p>
             </div>
           )}
         </div>
