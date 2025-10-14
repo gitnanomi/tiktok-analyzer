@@ -4,10 +4,7 @@ export default function ShareAnalysisButton({ result, viralScore }) {
   const [showShareModal, setShowShareModal] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  // ✅ 防御性检查
-  if (!result) {
-    return null;
-  }
+  if (!result) return null;
 
   const author = result.author || 'creator';
   const views = result.views || 0;
@@ -16,13 +13,14 @@ export default function ShareAnalysisButton({ result, viralScore }) {
   const resultId = result.id || `analysis-${Date.now()}`;
 
   const generateShareText = () => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
     return `I just analyzed @${author}'s viral TikTok video 🔥
 
 ⚡ Viral Score: ${viralScore || 9}/10
 👁️ ${(views / 1000000).toFixed(1)}M views
 🎯 Complete breakdown: hook, script, AI prompts
 
-Check it out: ${typeof window !== 'undefined' ? window.location.origin : ''}/shared/${resultId}
+Check it out: ${origin}/shared/${resultId}
 
 #TikTokMarketing #ViralContent`;
   };
@@ -34,15 +32,31 @@ Check it out: ${typeof window !== 'undefined' ? window.location.origin : ''}/sha
   };
 
   const copyLink = () => {
-    const shareUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/shared/${resultId}?ref=share`;
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const shareUrl = `${origin}/shared/${resultId}?ref=share`;
     navigator.clipboard.writeText(shareUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleShareReward = () => {
+    const shareCount = parseInt(localStorage.getItem('shareCount') || '0');
+    localStorage.setItem('shareCount', (shareCount + 1).toString());
+    
+    const currentCount = parseInt(localStorage.getItem('analysisCount') || '0');
+    if (currentCount > 0) {
+      const newCount = Math.max(0, currentCount - 1);
+      localStorage.setItem('analysisCount', newCount.toString());
+    }
+    
+    setShowShareModal(false);
+    setTimeout(() => {
+      alert('🎁 Thanks for sharing! You earned 1 free analysis credit.');
+    }, 500);
+  };
+
   return (
     <>
-      {/* Share Button */}
       <button
         onClick={() => setShowShareModal(true)}
         className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl hover:shadow-lg transition font-bold flex items-center gap-2"
@@ -51,7 +65,6 @@ Check it out: ${typeof window !== 'undefined' ? window.location.origin : ''}/sha
         <span>Share Analysis</span>
       </button>
 
-      {/* Share Modal */}
       {showShareModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-md w-full p-8 relative">
@@ -72,13 +85,11 @@ Check it out: ${typeof window !== 'undefined' ? window.location.origin : ''}/sha
               </p>
             </div>
 
-            {/* Preview Card */}
             <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-4 mb-6 border-2 border-purple-200">
               <div className="flex items-center gap-3 mb-3">
-                {thumbnail && (
+                {thumbnail ? (
                   <img src={thumbnail} alt="" className="w-16 h-16 rounded-lg object-cover" />
-                )}
-                {!thumbnail && (
+                ) : (
                   <div className="w-16 h-16 rounded-lg bg-purple-200 flex items-center justify-center">
                     <span className="text-2xl">🎬</span>
                   </div>
@@ -93,13 +104,13 @@ Check it out: ${typeof window !== 'undefined' ? window.location.origin : ''}/sha
               </div>
             </div>
 
-            {/* Share Options */}
             <div className="space-y-3 mb-6">
               
                 href={shareLinks.twitter}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full px-4 py-3 bg-[#1DA1F2] text-white rounded-lg hover:bg-[#1a8cd8] transition font-semibold flex items-center justify-center gap-2"
+                onClick={handleShareReward}
+                className="w-full px-4 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition font-semibold flex items-center justify-center gap-2"
               >
                 <span>🐦</span>
                 <span>Share on Twitter</span>
@@ -109,7 +120,8 @@ Check it out: ${typeof window !== 'undefined' ? window.location.origin : ''}/sha
                 href={shareLinks.linkedin}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full px-4 py-3 bg-[#0A66C2] text-white rounded-lg hover:bg-[#004182] transition font-semibold flex items-center justify-center gap-2"
+                onClick={handleShareReward}
+                className="w-full px-4 py-3 bg-blue-700 text-white rounded-lg hover:bg-blue-800 transition font-semibold flex items-center justify-center gap-2"
               >
                 <span>💼</span>
                 <span>Share on LinkedIn</span>
@@ -124,9 +136,8 @@ Check it out: ${typeof window !== 'undefined' ? window.location.origin : ''}/sha
               </button>
             </div>
 
-            {/* Social Proof */}
             <div className="text-center text-sm text-gray-500">
-              <div className="flex items-center justify-center gap-2 mb-2">
+              <div className="flex items-center justify-center gap-2">
                 <span>👥</span>
                 <span className="font-semibold">1,247 people</span>
                 <span>shared this week</span>
