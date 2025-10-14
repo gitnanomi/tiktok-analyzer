@@ -68,14 +68,14 @@ export default function ShareAnalysisButton({ result, viralScore }) {
 
             <div className="space-y-3">
               
-                href={getTwitterUrl()}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => handleShare('twitter')}
-                className="block w-full px-4 py-3 bg-blue-500 text-white text-center rounded-lg hover:bg-blue-600 transition font-semibold"
-              >
-                Share on Twitter
-              </a>
+               href={getTwitterLink()}
+  target="_blank"
+  rel="noopener noreferrer"
+  onClick={handleShare}
+  className="block w-full px-4 py-3 bg-blue-500 text-white text-center rounded-lg hover:bg-blue-600 transition font-semibold"
+>
+  Share on Twitter
+</a>
 
               <button
                 onClick={copyToClipboard}
