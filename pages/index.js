@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
+import ShareAnalysisButton from '../components/ShareAnalysisButton';
 
 // Email Gate Modal Component
 function EmailGateModal({ onSubmit, onClose }) {
@@ -171,6 +172,66 @@ function UpgradeModal({ onClose }) {
   );
 }
 
+// Saved Analyses Modal
+function SavedAnalysesModal({ savedAnalyses, onClose, onLoad }) {
+  return (
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="p-6 border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-black text-gray-900">⭐ Saved Analyses</h2>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-6">
+          {savedAnalyses.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="text-6xl mb-4">📭</div>
+              <p className="text-gray-600">No saved analyses yet</p>
+            </div>
+          ) : (
+            <div className="grid md:grid-cols-2 gap-4">
+              {savedAnalyses.map((item, i) => (
+                <div key={i} className="border-2 border-gray-200 rounded-xl p-4 hover:border-purple-300 transition">
+                  <div className="flex gap-3 mb-3">
+                    {item.thumbnail && (
+                      <img src={item.thumbnail} alt="" className="w-16 h-16 rounded-lg object-cover" />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-bold text-gray-900 truncate">@{item.author}</h3>
+                      <p className="text-sm text-gray-600 line-clamp-2">{item.description}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm mb-3">
+                    <span className="font-bold text-purple-600">{item.viralScore}/10</span>
+                    <span className="text-gray-400">•</span>
+                    <span className="text-gray-500">{new Date(item.savedAt).toLocaleDateString()}</span>
+                  </div>
+                  <button
+                    onClick={() => {
+                      onLoad(item);
+                      onClose();
+                    }}
+                    className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-semibold text-sm"
+                  >
+                    View Analysis
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Home() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -189,16 +250,62 @@ export default function Home() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [analysisCount, setAnalysisCount] = useState(0);
 
+  // ✅ NEW: Saved Analyses States
+  const [savedAnalyses, setSavedAnalyses] = useState([]);
+  const [showSavedModal, setShowSavedModal] = useState(false);
+
+  // ✅ NEW: Recent Analyses
+  const [recentAnalyses, setRecentAnalyses] = useState([]);
+
   // ✅ Load user data from localStorage on mount
   useEffect(() => {
     const storedEmail = localStorage.getItem('userEmail');
     const storedCount = parseInt(localStorage.getItem('analysisCount') || '0');
+    const saved = JSON.parse(localStorage.getItem('savedAnalyses') || '[]');
+    const recent = JSON.parse(localStorage.getItem('recentAnalyses') || '[]');
     
     if (storedEmail) {
       setUserEmail(storedEmail);
       setAnalysisCount(storedCount);
     }
+    setSavedAnalyses(saved);
+    setRecentAnalyses(recent.slice(0, 5));
   }, []);
+
+  // ✅ NEW: Save to recent analyses
+  const saveToRecent = (result) => {
+    const recent = JSON.parse(localStorage.getItem('recentAnalyses') || '[]');
+    const newItem = {
+      creator: result.author,
+      score: calculateViralScore(result),
+      timestamp: new Date().toISOString()
+    };
+    const updated = [newItem, ...recent.filter(r => r.creator !== result.author)].slice(0, 10);
+    localStorage.setItem('recentAnalyses', JSON.stringify(updated));
+    setRecentAnalyses(updated.slice(0, 5));
+  };
+
+  // ✅ NEW: Toggle save analysis
+  const toggleSave = (result) => {
+    const saved = JSON.parse(localStorage.getItem('savedAnalyses') || '[]');
+    const exists = saved.some(s => s.url === result.url);
+    
+    let updated;
+    if (exists) {
+      updated = saved.filter(s => s.url !== result.url);
+    } else {
+      updated = [...saved, {
+        ...result,
+        viralScore: calculateViralScore(result),
+        savedAt: new Date().toISOString()
+      }];
+    }
+    
+    localStorage.setItem('savedAnalyses', JSON.stringify(updated));
+    setSavedAnalyses(updated);
+  };
+
+  const isSaved = (result) => savedAnalyses.some(s => s.url === result.url);
 
   const getViewMode = (idx) => viewMode[idx] || 'execute';
   const setResultViewMode = (idx, mode) => {
@@ -289,7 +396,7 @@ export default function Home() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           input: input.trim(),
-          userEmail: userEmail // Pass email to backend
+          userEmail: userEmail
         }),
       });
 
@@ -308,6 +415,9 @@ export default function Home() {
         const newCount = analysisCount + 1;
         setAnalysisCount(newCount);
         localStorage.setItem('analysisCount', newCount.toString());
+        
+        // ✅ NEW: Save to recent
+        data.results.forEach(result => saveToRecent(result));
         
         setInput('');
       }
@@ -374,7 +484,12 @@ FILMING NOTES:
 PROPS NEEDED:
 - ${productName}
 - Consistent background
-- Natural light source`;
+- Natural light source
+
+---
+✨ Generated by TikTok Analyzer Pro
+🔗 Analyze your videos: ${typeof window !== 'undefined' ? window.location.origin : 'tiktokanalyzer.pro'}
+📧 Join 12,000+ marketers getting viral insights weekly`;
   };
 
   const copyToClipboard = (text, buttonElement) => {
@@ -387,8 +502,6 @@ PROPS NEEDED:
         buttonElement.textContent = originalText;
         buttonElement.classList.remove('bg-green-600');
       }, 2000);
-    } else {
-      alert('✅ Copied to clipboard!');
     }
   };
 
@@ -435,7 +548,10 @@ POST-PRODUCTION
 
 ---
 Generated by TikTok Analyzer Pro
-${new Date().toLocaleDateString()}`;
+${typeof window !== 'undefined' ? window.location.origin : 'tiktokanalyzer.pro'}
+${new Date().toLocaleDateString()}
+
+💡 Want more viral insights? Visit us for unlimited analyses!`;
 
     const blob = new Blob([checklist], { type: 'text/plain' });
     const link = document.createElement('a');
@@ -493,6 +609,18 @@ ${new Date().toLocaleDateString()}`;
         />
       )}
 
+      {/* ✅ NEW: Saved Analyses Modal */}
+      {showSavedModal && (
+        <SavedAnalysesModal
+          savedAnalyses={savedAnalyses}
+          onClose={() => setShowSavedModal(false)}
+          onLoad={(item) => {
+            setResults([item]);
+            setMode('single');
+          }}
+        />
+      )}
+
       <div className="min-h-screen bg-gradient-to-br from-purple-600 via-purple-700 to-indigo-900">
         
         {/* Header */}
@@ -507,14 +635,25 @@ ${new Date().toLocaleDateString()}`;
                   Analyze why it's viral • Generate your script • Execute in minutes
                 </p>
               </div>
-              {results.length > 0 && (
-                <button
-                  onClick={exportToCSV}
-                  className="px-5 py-2.5 bg-white text-purple-700 text-sm font-bold rounded-lg hover:bg-gray-100 transition shadow-lg"
-                >
-                  📥 Export CSV
-                </button>
-              )}
+              <div className="flex items-center gap-3">
+                {/* ✅ NEW: Saved Button */}
+                {savedAnalyses.length > 0 && (
+                  <button
+                    onClick={() => setShowSavedModal(true)}
+                    className="px-5 py-2.5 bg-yellow-400 text-yellow-900 text-sm font-bold rounded-lg hover:bg-yellow-300 transition shadow-lg"
+                  >
+                    ⭐ Saved ({savedAnalyses.length})
+                  </button>
+                )}
+                {results.length > 0 && (
+                  <button
+                    onClick={exportToCSV}
+                    className="px-5 py-2.5 bg-white text-purple-700 text-sm font-bold rounded-lg hover:bg-gray-100 transition shadow-lg"
+                  >
+                    📥 Export CSV
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -626,9 +765,22 @@ ${new Date().toLocaleDateString()}`;
                           />
                         )}
                         <div className="flex-1">
-                          <h2 className="text-3xl font-black text-gray-900 mb-2">
-                            @{result.author}
-                          </h2>
+                          <div className="flex items-start justify-between mb-2">
+                            <h2 className="text-3xl font-black text-gray-900">
+                              @{result.author}
+                            </h2>
+                            {/* ✅ NEW: Save Button */}
+                            <button
+                              onClick={() => toggleSave(result)}
+                              className={`px-4 py-2 rounded-lg transition font-bold ${
+                                isSaved(result)
+                                  ? 'bg-yellow-100 text-yellow-800 border-2 border-yellow-400'
+                                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border-2 border-gray-300'
+                              }`}
+                            >
+                              {isSaved(result) ? '⭐ Saved' : '☆ Save'}
+                            </button>
+                          </div>
                           <p className="text-gray-700 text-lg mb-4">{result.description}</p>
                           
                           {/* Stats */}
@@ -875,26 +1027,36 @@ ${new Date().toLocaleDateString()}`;
                           </div>
                         )}
 
-                        {/* Learn Mode - Keep your existing Learn Mode code here */}
+                        {/* Learn Mode - Placeholder */}
                         {currentViewMode === 'learn' && (
                           <div className="text-center py-12 text-gray-600">
                             <div className="text-5xl mb-4">🎓</div>
-                            <p className="text-lg">Learn Mode content from your original code goes here</p>
+                            <p className="text-lg">Learn Mode: Psychology Journey & 7-Step Framework</p>
+                            <p className="text-sm mt-2">(Keep your existing Learn Mode content here)</p>
                           </div>
                         )}
 
-                        {/* Watch Button */}
+                        {/* ✅ NEW: Action Buttons */}
                         {result.url && (
                           <div className="text-center pt-6 mt-6 border-t-2 border-gray-200">
-                            <a
-                              href={result.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-3 px-10 py-5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:shadow-2xl transition-all transform hover:scale-105 font-bold text-xl"
-                            >
-                              <span>🎬 Watch on TikTok</span>
-                              <span>→</span>
-                            </a>
+                            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                              {/* Share Button */}
+                              <ShareAnalysisButton 
+                                result={result} 
+                                viralScore={viralScore}
+                              />
+                              
+                              {/* Watch Button */}
+                              <a
+                                href={result.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center justify-center gap-3 px-10 py-5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:shadow-2xl transition-all transform hover:scale-105 font-bold text-xl"
+                              >
+                                <span>🎬 Watch on TikTok</span>
+                                <span>→</span>
+                              </a>
+                            </div>
                           </div>
                         )}
 
@@ -917,7 +1079,8 @@ ${new Date().toLocaleDateString()}`;
                 <span className="font-bold text-purple-600">Execute Mode</span>: Get scripts & checklists in minutes<br/>
                 <span className="font-bold text-blue-600">Learn Mode</span>: Deep dive into psychology & scripting
               </p>
-              <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+              
+              <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto mb-8">
                 <div className="bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-300 p-8 rounded-xl">
                   <div className="text-5xl mb-4">⚡</div>
                   <h3 className="font-black text-xl text-gray-900 mb-3">Execute Mode</h3>
@@ -933,6 +1096,24 @@ ${new Date().toLocaleDateString()}`;
                   </p>
                 </div>
               </div>
+
+              {/* ✅ NEW: Recent Analyses */}
+              {recentAnalyses.length > 0 && (
+                <div className="mt-8 p-6 bg-purple-50 rounded-xl border-2 border-purple-200 max-w-md mx-auto">
+                  <h3 className="font-bold text-gray-900 mb-3 text-lg">🔥 Recently Analyzed</h3>
+                  <div className="space-y-2">
+                    {recentAnalyses.map((item, i) => (
+                      <div key={i} className="flex items-center justify-between text-sm bg-white rounded-lg px-4 py-2">
+                        <span className="text-gray-700 font-medium">@{item.creator}</span>
+                        <span className="font-bold text-purple-600">{item.score}/10</span>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-3">
+                    Join thousands analyzing viral content daily
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
