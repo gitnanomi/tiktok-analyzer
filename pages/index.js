@@ -1035,7 +1035,100 @@ ${new Date().toLocaleDateString()}`;
 
           {result.analysis && (
             <div className="p-8">
-              
+          
+    {/* 👁️ 在这里添加 Vision 标识 - 放在最前面 */}
+    {result.visionUsed && (
+      <div className="mb-6 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border-2 border-purple-300">
+        <div className="flex items-center gap-3">
+          <span className="text-3xl">👁️</span>
+          <div>
+            <div className="font-bold text-purple-900 text-lg">Vision Analysis Active</div>
+            <div className="text-sm text-purple-700">
+              AI actually "saw" the video frames for ultra-detailed analysis
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {/* 📊 添加结构化数据展示 */}
+    {result.analysis?.structured && (
+      <div className="grid md:grid-cols-3 gap-4 mb-6">
+        {result.analysis.structured.replicationScore && (
+          <div className="bg-white p-4 rounded-xl border-2 border-purple-200">
+            <div className="text-sm text-gray-600 mb-1">Replication Score</div>
+            <div className="text-4xl font-black text-purple-600">
+              {result.analysis.structured.replicationScore}/10
+            </div>
+            <div className="text-xs text-gray-500 mt-1">How easy to copy</div>
+          </div>
+        )}
+        
+        {result.analysis.structured.difficulty && (
+          <div className="bg-white p-4 rounded-xl border-2 border-blue-200">
+            <div className="text-sm text-gray-600 mb-1">Difficulty</div>
+            <div className="text-4xl font-black text-blue-600">
+              {result.analysis.structured.difficulty}/10
+            </div>
+            <div className="text-xs text-gray-500 mt-1">Skill required</div>
+          </div>
+        )}
+        
+        {result.analysis.structured.budget && (
+          <div className="bg-white p-4 rounded-xl border-2 border-green-200">
+            <div className="text-sm text-gray-600 mb-1">Est. Budget</div>
+            <div className="text-4xl font-black text-green-600">
+              ${result.analysis.structured.budget}
+            </div>
+            <div className="text-xs text-gray-500 mt-1">Total equipment cost</div>
+          </div>
+        )}
+      </div>
+    )}
+
+    {/* 🎯 添加初学者判断 */}
+    {result.analysis?.structured?.canBeginneerDoIt && (
+      <div className={`mb-6 p-4 rounded-xl border-2 ${
+        result.analysis.structured.canBeginneerDoIt === 'yes' ? 'bg-green-50 border-green-300' :
+        result.analysis.structured.canBeginneerDoIt === 'yes-with-conditions' ? 'bg-yellow-50 border-yellow-300' :
+        'bg-red-50 border-red-300'
+      }`}>
+        <div className="flex items-center gap-3">
+          <span className="text-3xl">
+            {result.analysis.structured.canBeginneerDoIt === 'yes' ? '✅' :
+             result.analysis.structured.canBeginneerDoIt === 'yes-with-conditions' ? '⚠️' :
+             '❌'}
+          </span>
+          <div>
+            <div className={`font-bold text-lg ${
+              result.analysis.structured.canBeginneerDoIt === 'yes' ? 'text-green-900' :
+              result.analysis.structured.canBeginneerDoIt === 'yes-with-conditions' ? 'text-yellow-900' :
+              'text-red-900'
+            }`}>
+              {result.analysis.structured.canBeginneerDoIt === 'yes' ? 'Beginner-Friendly!' :
+               result.analysis.structured.canBeginneerDoIt === 'yes-with-conditions' ? 'Possible with Conditions' :
+               'Not Recommended for Beginners'}
+            </div>
+            <div className={`text-sm ${
+              result.analysis.structured.canBeginneerDoIt === 'yes' ? 'text-green-700' :
+              result.analysis.structured.canBeginneerDoIt === 'yes-with-conditions' ? 'text-yellow-700' :
+              'text-red-700'
+            }`}>
+              {result.analysis.structured.canBeginneerDoIt === 'yes' 
+                ? 'You can replicate this video with basic equipment'
+                : result.analysis.structured.canBeginneerDoIt === 'yes-with-conditions'
+                ? 'Check requirements below before starting'
+                : 'This video requires advanced skills or expensive equipment'}
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
+    
+    {/* 原有的 Viral Score Card 在这里继续 */}
+    <div className={`rounded-2xl p-6 border-3 mb-6 ${getScoreBgColor(viralScore)}`}>
+      {/* ... 你原来的代码 ... */}
+    </div>
               {/* Viral Score Card */}
               <div className={`rounded-2xl p-6 border-3 mb-6 ${getScoreBgColor(viralScore)}`}>
                 <div className="flex items-center justify-between mb-4">
