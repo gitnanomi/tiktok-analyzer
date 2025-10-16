@@ -7,7 +7,6 @@ function EmailGateModal({ onSubmit, onClose }) {
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
 
-  // Check if email already exists in localStorage
   useEffect(() => {
     const storedEmail = localStorage.getItem('userEmail');
     if (storedEmail) {
@@ -50,7 +49,6 @@ function EmailGateModal({ onSubmit, onClose }) {
           </p>
         </div>
 
-        {/* Immediate Value */}
         <div className="space-y-3 mb-6">
           <div className="flex items-start gap-3 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border-2 border-green-300">
             <span className="text-2xl flex-shrink-0">📝</span>
@@ -134,10 +132,8 @@ function UpgradeModal({ onClose }) {
             You've used all 3 free analyses. Upgrade to keep finding viral videos!
           </p>
 
-          {/* 3-tier pricing */}
           <div className="space-y-4 mb-6">
             
-            {/* Starter Plan */}
             <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border-2 border-gray-300 text-left">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-xl font-black">🎯 Starter</h3>
@@ -162,7 +158,6 @@ function UpgradeModal({ onClose }) {
               </ul>
             </div>
 
-            {/* Pro Plan - Most Popular */}
             <div className="bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl p-6 border-4 border-yellow-400 text-left relative overflow-hidden">
               <div className="absolute -top-3 -right-3 bg-yellow-400 text-yellow-900 px-4 py-1 text-xs font-black rotate-12 shadow-lg">
                 MOST POPULAR 🔥
@@ -203,7 +198,6 @@ function UpgradeModal({ onClose }) {
               </div>
             </div>
 
-            {/* Agency Plan */}
             <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border-2 border-gray-300 text-left">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-xl font-black">🏢 Agency</h3>
@@ -341,7 +335,6 @@ export default function Home() {
   // Recent Analyses
   const [recentAnalyses, setRecentAnalyses] = useState([]);
 
-  // Load user data from localStorage on mount
   useEffect(() => {
     const storedEmail = localStorage.getItem('userEmail');
     const storedCount = parseInt(localStorage.getItem('analysisCount') || '0');
@@ -356,7 +349,6 @@ export default function Home() {
     setRecentAnalyses(recent.slice(0, 5));
   }, []);
 
-  // Save to recent analyses
   const saveToRecent = (result) => {
     const recent = JSON.parse(localStorage.getItem('recentAnalyses') || '[]');
     const newItem = {
@@ -369,7 +361,6 @@ export default function Home() {
     setRecentAnalyses(updated.slice(0, 5));
   };
 
-  // Toggle save analysis
   const toggleSave = (result) => {
     const saved = JSON.parse(localStorage.getItem('savedAnalyses') || '[]');
     const exists = saved.some(s => s.url === result.url);
@@ -420,14 +411,12 @@ export default function Home() {
     return detailedView[`${resultIdx}-${section}`] || false;
   };
 
-  // Email submission handler
   const handleEmailSubmit = async (email) => {
     setUserEmail(email);
     localStorage.setItem('userEmail', email);
     localStorage.setItem('analysisCount', '0');
     setAnalysisCount(0);
     
-    // Send to backend
     try {
       await fetch('/api/capture-email', {
         method: 'POST',
@@ -443,24 +432,20 @@ export default function Home() {
     }
     
     setShowEmailGate(false);
-    // Auto-trigger analysis after email submission
     setTimeout(() => handleAnalyze(), 100);
   };
 
-  // Modified handleAnalyze with email gate
   const handleAnalyze = async () => {
     if (!input.trim()) {
       setError('Please enter a TikTok URL or keywords');
       return;
     }
 
-    // Check if user has email
     if (!userEmail) {
       setShowEmailGate(true);
       return;
     }
 
-    // Check free tier limit
     if (analysisCount >= 3) {
       setShowUpgradeModal(true);
       return;
@@ -486,6 +471,11 @@ export default function Home() {
 
       const data = await response.json();
       
+      // 🔍 调试日志
+      console.log('🔍 API Response:', data);
+      console.log('🔍 First result:', data.results?.[0]);
+      console.log('🔍 Analysis structure:', data.results?.[0]?.analysis);
+      
       if (!response.ok) {
         throw new Error(data.error || 'Analysis failed');
       }
@@ -495,12 +485,10 @@ export default function Home() {
       setDemoMode(data.demo || false);
       
       if (data.results && data.results.length > 0) {
-        // Increment analysis count
         const newCount = analysisCount + 1;
         setAnalysisCount(newCount);
         localStorage.setItem('analysisCount', newCount.toString());
         
-        // Save to recent
         data.results.forEach(result => saveToRecent(result));
         
         setInput('');
@@ -676,7 +664,6 @@ ${new Date().toLocaleDateString()}`;
         <meta name="description" content="142 people completed the 7-day challenge last week and made their first dollar. AI helps you find the easiest viral videos to copy, step-by-step to your first sale." />
       </Head>
 
-      {/* Email Gate Modal */}
       {showEmailGate && (
         <EmailGateModal 
           onSubmit={handleEmailSubmit}
@@ -684,14 +671,12 @@ ${new Date().toLocaleDateString()}`;
         />
       )}
 
-      {/* Upgrade Modal */}
       {showUpgradeModal && (
         <UpgradeModal 
           onClose={() => setShowUpgradeModal(false)}
         />
       )}
 
-      {/* Saved Analyses Modal */}
       {showSavedModal && (
         <SavedAnalysesModal
           savedAnalyses={savedAnalyses}
@@ -705,9 +690,7 @@ ${new Date().toLocaleDateString()}`;
 
       <div className="min-h-screen bg-gradient-to-br from-purple-600 via-purple-700 to-indigo-900">
         
-        {/* 🔥 NEW Hero Section */}
         <div className="relative overflow-hidden">
-          {/* Background pattern */}
           <div className="absolute inset-0 opacity-10">
             <div className="absolute top-0 left-1/4 w-96 h-96 bg-yellow-400 rounded-full blur-3xl"></div>
             <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-pink-400 rounded-full blur-3xl"></div>
@@ -715,7 +698,6 @@ ${new Date().toLocaleDateString()}`;
 
           <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
             
-            {/* Main Hero */}
             <div className="text-center mb-12">
               <div className="inline-block mb-6">
                 <div className="flex items-center gap-2 bg-yellow-400 text-yellow-900 px-6 py-3 rounded-full font-black text-sm shadow-lg animate-pulse">
@@ -739,7 +721,6 @@ ${new Date().toLocaleDateString()}`;
                 No creativity needed, no luck required, just <span className="font-bold text-yellow-300">30 min/day</span> following the system
               </p>
 
-              {/* CTA Buttons */}
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
                 <button
                   onClick={() => setShowEmailGate(true)}
@@ -754,7 +735,6 @@ ${new Date().toLocaleDateString()}`;
                 </div>
               </div>
 
-              {/* Social Proof Bar */}
               <div className="flex flex-wrap justify-center gap-8 text-white/90">
                 <div className="text-center">
                   <div className="text-4xl font-black text-yellow-300">89%</div>
@@ -771,7 +751,6 @@ ${new Date().toLocaleDateString()}`;
               </div>
             </div>
 
-            {/* Video Testimonials Preview */}
             <div className="grid md:grid-cols-3 gap-6 mb-16">
               <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20 hover:bg-white/15 transition">
                 <div className="flex items-center gap-3 mb-3">
@@ -827,7 +806,6 @@ ${new Date().toLocaleDateString()}`;
           </div>
         </div>
 
-        {/* Header / Navigation */}
         <div className="bg-white/10 backdrop-blur-sm border-y border-white/20 sticky top-0 z-40">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <div className="flex items-center justify-between">
@@ -860,7 +838,6 @@ ${new Date().toLocaleDateString()}`;
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           
-          {/* User Status Bar */}
           {userEmail && (
             <div className="bg-white/10 backdrop-blur-sm rounded-xl px-6 py-3 mb-6 flex items-center justify-between border border-white/20">
               <div className="flex items-center gap-3">
@@ -886,7 +863,6 @@ ${new Date().toLocaleDateString()}`;
             </div>
           )}
           
-          {/* Search Box */}
           <div className="bg-white rounded-2xl shadow-2xl p-8 mb-8">
             <div className="flex gap-4 mb-3">
               <input
@@ -944,610 +920,484 @@ ${new Date().toLocaleDateString()}`;
             )}
           </div>
 
-          {/* Results - Keep existing */}
-{results.length > 0 && (
-  <div className="space-y-8">
-    {results.map((result, idx) => {
-      const viralScore = calculateViralScore(result);
-      const currentViewMode = getViewMode(idx);
-      
-      return (
-        <div key={idx} className="bg-white rounded-2xl shadow-2xl overflow-hidden">
-          
-          {/* Video Header */}
-          <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-8 border-b-2 border-gray-200">
-            <div className="flex gap-6 items-start">
-              {result.thumbnail && (
-                <img 
-                  src={result.thumbnail} 
-                  alt="Video thumbnail"
-                  className="w-32 h-32 rounded-xl object-cover shadow-lg"
-                />
-              )}
-              <div className="flex-1">
-                <div className="flex items-start justify-between mb-2">
-                  <h2 className="text-3xl font-black text-gray-900">
-                    @{result.author}
-                  </h2>
-                  <button
-                    onClick={() => toggleSave(result)}
-                    className={`px-4 py-2 rounded-lg transition font-bold ${
-                      isSaved(result)
-                        ? 'bg-yellow-100 text-yellow-800 border-2 border-yellow-400'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border-2 border-gray-300'
-                    }`}
-                  >
-                    {isSaved(result) ? '⭐ Saved' : '☆ Save'}
-                  </button>
-                </div>
-                <p className="text-gray-700 text-lg mb-4">{result.description}</p>
+          {results.length > 0 && (
+            <div className="space-y-8">
+              {results.map((result, idx) => {
+                const viralScore = calculateViralScore(result);
+                const currentViewMode = getViewMode(idx);
                 
-                {/* Stats */}
-                <div className="flex flex-wrap gap-3 mb-4">
-                  {result.views > 0 && (
-                    <span className="px-4 py-2 bg-blue-100 text-blue-900 rounded-full font-bold text-sm">
-                      👁️ {(result.views / 1000000).toFixed(1)}M views
-                    </span>
-                  )}
-                  {result.likes > 0 && (
-                    <span className="px-4 py-2 bg-red-100 text-red-900 rounded-full font-bold text-sm">
-                      ❤️ {(result.likes / 1000).toFixed(1)}K likes
-                    </span>
-                  )}
-                  {result.comments > 0 && (
-                    <span className="px-4 py-2 bg-green-100 text-green-900 rounded-full font-bold text-sm">
-                      💬 {result.comments.toLocaleString()}
-                    </span>
-                  )}
-                  {result.shares > 0 && (
-                    <span className="px-4 py-2 bg-purple-100 text-purple-900 rounded-full font-bold text-sm">
-                      🔄 {result.shares.toLocaleString()}
-                    </span>
-                  )}
-                </div>
+                return (
+                  <div key={idx} className="bg-white rounded-2xl shadow-2xl overflow-hidden">
+                    
+                    <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-8 border-b-2 border-gray-200">
+                      <div className="flex gap-6 items-start">
+                        {result.thumbnail && (
+                          <img 
+                            src={result.thumbnail} 
+                            alt="Video thumbnail"
+                            className="w-32 h-32 rounded-xl object-cover shadow-lg"
+                          />
+                        )}
+                        <div className="flex-1">
+                          <div className="flex items-start justify-between mb-2">
+                            <h2 className="text-3xl font-black text-gray-900">
+                              @{result.author}
+                            </h2>
+                            <button
+                              onClick={() => toggleSave(result)}
+                              className={`px-4 py-2 rounded-lg transition font-bold ${
+                                isSaved(result)
+                                  ? 'bg-yellow-100 text-yellow-800 border-2 border-yellow-400'
+                                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border-2 border-gray-300'
+                              }`}
+                            >
+                              {isSaved(result) ? '⭐ Saved' : '☆ Save'}
+                            </button>
+                          </div>
+                          <p className="text-gray-700 text-lg mb-4">{result.description}</p>
+                          
+                          <div className="flex flex-wrap gap-3 mb-4">
+                            {result.views > 0 && (
+                              <span className="px-4 py-2 bg-blue-100 text-blue-900 rounded-full font-bold text-sm">
+                                👁️ {(result.views / 1000000).toFixed(1)}M views
+                              </span>
+                            )}
+                            {result.likes > 0 && (
+                              <span className="px-4 py-2 bg-red-100 text-red-900 rounded-full font-bold text-sm">
+                                ❤️ {(result.likes / 1000).toFixed(1)}K likes
+                              </span>
+                            )}
+                            {result.comments > 0 && (
+                              <span className="px-4 py-2 bg-green-100 text-green-900 rounded-full font-bold text-sm">
+                                💬 {result.comments.toLocaleString()}
+                              </span>
+                            )}
+                            {result.shares > 0 && (
+                              <span className="px-4 py-2 bg-purple-100 text-purple-900 rounded-full font-bold text-sm">
+                                🔄 {result.shares.toLocaleString()}
+                              </span>
+                            )}
+                          </div>
 
-                {/* Tags */}
-                <div className="flex flex-wrap gap-2">
-                  {result.analysis?.contentType && result.analysis.contentType !== 'Unknown' && (
-                    <span className="px-3 py-1 bg-purple-600 text-white rounded-lg text-sm font-bold">
-                      {result.analysis.contentType}
-                    </span>
-                  )}
-                  {result.analysis?.category && result.analysis.category !== 'Unknown' && (
-                    <span className="px-3 py-1 bg-blue-600 text-white rounded-lg text-sm font-bold">
-                      {result.analysis.category}
-                    </span>
-                  )}
-                  {result.analysis?.tone && result.analysis.tone !== 'Unknown' && (
-                    <span className="px-3 py-1 bg-pink-600 text-white rounded-lg text-sm font-bold">
-                      {result.analysis.tone}
-                    </span>
-                  )}
-                  {result.analysis?.isAd?.toLowerCase().includes('yes') && (
-                    <span className="px-3 py-1 bg-yellow-400 text-yellow-900 rounded-lg text-sm font-bold">
-                      💰 AD
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {result.analysis && (
-            <div className="p-8">
-          
-    {/* 👁️ 在这里添加 Vision 标识 - 放在最前面 */}
-    {result.visionUsed && (
-      <div className="mb-6 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border-2 border-purple-300">
-        <div className="flex items-center gap-3">
-          <span className="text-3xl">👁️</span>
-          <div>
-            <div className="font-bold text-purple-900 text-lg">Vision Analysis Active</div>
-            <div className="text-sm text-purple-700">
-              AI actually "saw" the video frames for ultra-detailed analysis
-            </div>
-          </div>
-        </div>
-      </div>
-    )}
-
-    {/* 📊 添加结构化数据展示 */}
-    {result.analysis?.structured && (
-      <div className="grid md:grid-cols-3 gap-4 mb-6">
-        {result.analysis.structured.replicationScore && (
-          <div className="bg-white p-4 rounded-xl border-2 border-purple-200">
-            <div className="text-sm text-gray-600 mb-1">Replication Score</div>
-            <div className="text-4xl font-black text-purple-600">
-              {result.analysis.structured.replicationScore}/10
-            </div>
-            <div className="text-xs text-gray-500 mt-1">How easy to copy</div>
-          </div>
-        )}
-        
-        {result.analysis.structured.difficulty && (
-          <div className="bg-white p-4 rounded-xl border-2 border-blue-200">
-            <div className="text-sm text-gray-600 mb-1">Difficulty</div>
-            <div className="text-4xl font-black text-blue-600">
-              {result.analysis.structured.difficulty}/10
-            </div>
-            <div className="text-xs text-gray-500 mt-1">Skill required</div>
-          </div>
-        )}
-        
-        {result.analysis.structured.budget && (
-          <div className="bg-white p-4 rounded-xl border-2 border-green-200">
-            <div className="text-sm text-gray-600 mb-1">Est. Budget</div>
-            <div className="text-4xl font-black text-green-600">
-              ${result.analysis.structured.budget}
-            </div>
-            <div className="text-xs text-gray-500 mt-1">Total equipment cost</div>
-          </div>
-        )}
-      </div>
-    )}
-
-    {/* 🎯 添加初学者判断 */}
-    {result.analysis?.structured?.canBeginneerDoIt && (
-      <div className={`mb-6 p-4 rounded-xl border-2 ${
-        result.analysis.structured.canBeginneerDoIt === 'yes' ? 'bg-green-50 border-green-300' :
-        result.analysis.structured.canBeginneerDoIt === 'yes-with-conditions' ? 'bg-yellow-50 border-yellow-300' :
-        'bg-red-50 border-red-300'
-      }`}>
-        <div className="flex items-center gap-3">
-          <span className="text-3xl">
-            {result.analysis.structured.canBeginneerDoIt === 'yes' ? '✅' :
-             result.analysis.structured.canBeginneerDoIt === 'yes-with-conditions' ? '⚠️' :
-             '❌'}
-          </span>
-          <div>
-            <div className={`font-bold text-lg ${
-              result.analysis.structured.canBeginneerDoIt === 'yes' ? 'text-green-900' :
-              result.analysis.structured.canBeginneerDoIt === 'yes-with-conditions' ? 'text-yellow-900' :
-              'text-red-900'
-            }`}>
-              {result.analysis.structured.canBeginneerDoIt === 'yes' ? 'Beginner-Friendly!' :
-               result.analysis.structured.canBeginneerDoIt === 'yes-with-conditions' ? 'Possible with Conditions' :
-               'Not Recommended for Beginners'}
-            </div>
-            <div className={`text-sm ${
-              result.analysis.structured.canBeginneerDoIt === 'yes' ? 'text-green-700' :
-              result.analysis.structured.canBeginneerDoIt === 'yes-with-conditions' ? 'text-yellow-700' :
-              'text-red-700'
-            }`}>
-              {result.analysis.structured.canBeginneerDoIt === 'yes' 
-                ? 'You can replicate this video with basic equipment'
-                : result.analysis.structured.canBeginneerDoIt === 'yes-with-conditions'
-                ? 'Check requirements below before starting'
-                : 'This video requires advanced skills or expensive equipment'}
-            </div>
-          </div>
-        </div>
-      </div>
-    )}
-    
-    {/* 原有的 Viral Score Card 在这里继续 */}
-    <div className={`rounded-2xl p-6 border-3 mb-6 ${getScoreBgColor(viralScore)}`}>
-      {/* ... 你原来的代码 ... */}
-    </div>
-              {/* Viral Score Card */}
-              <div className={`rounded-2xl p-6 border-3 mb-6 ${getScoreBgColor(viralScore)}`}>
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-2xl font-black text-gray-900">⚡ VIRAL ANALYSIS</h3>
-                </div>
-                
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div>
-                    <div className="text-sm text-gray-600 font-semibold mb-2">Overall Viral Score</div>
-                    <div className={`text-6xl font-black ${getScoreColor(viralScore)}`}>
-                      {viralScore}/10
-                    </div>
-                    <div className="mt-2">
-                      <div className="w-full bg-gray-200 rounded-full h-3">
-                        <div 
-                          className={`h-3 rounded-full ${viralScore >= 8 ? 'bg-green-500' : viralScore >= 6 ? 'bg-yellow-500' : 'bg-orange-500'}`}
-                          style={{ width: `${viralScore * 10}%` }}
-                        ></div>
+                          <div className="flex flex-wrap gap-2">
+                            {result.analysis?.contentType && result.analysis.contentType !== 'Unknown' && (
+                              <span className="px-3 py-1 bg-purple-600 text-white rounded-lg text-sm font-bold">
+                                {result.analysis.contentType}
+                              </span>
+                            )}
+                            {result.analysis?.category && result.analysis.category !== 'Unknown' && (
+                              <span className="px-3 py-1 bg-blue-600 text-white rounded-lg text-sm font-bold">
+                                {result.analysis.category}
+                              </span>
+                            )}
+                            {result.analysis?.tone && result.analysis.tone !== 'Unknown' && (
+                              <span className="px-3 py-1 bg-pink-600 text-white rounded-lg text-sm font-bold">
+                                {result.analysis.tone}
+                              </span>
+                            )}
+                            {result.analysis?.isAd?.toLowerCase().includes('yes') && (
+                              <span className="px-3 py-1 bg-yellow-400 text-yellow-900 rounded-lg text-sm font-bold">
+                                💰 AD
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-semibold text-gray-700">Replication Difficulty:</span>
-                      <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-bold">
-                        ✅ Easy
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-semibold text-gray-700">Production Cost:</span>
-                      <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-bold">
-                        💰 Low
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-semibold text-gray-700">Time to Replicate:</span>
-                      <span className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm font-bold">
-                        ⏱️ 1-2 hours
-                      </span>
-                    </div>
-                    {viralScore >= 8 && (
-                      <div className="mt-3 p-3 bg-white rounded-lg border-2 border-green-300">
-                        <div className="text-green-800 font-bold text-sm">
-                          🔥 HIGH REPLICATION POTENTIAL
+
+                    {result.analysis && (
+                      <div className="p-8">
+                        
+                        {/* 👁️ Vision 分析标识 */}
+                        {result.visionUsed && (
+                          <div className="mb-6 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border-2 border-purple-300">
+                            <div className="flex items-center gap-3">
+                              <span className="text-3xl">👁️</span>
+                              <div>
+                                <div className="font-bold text-purple-900 text-lg">Vision Analysis Active</div>
+                                <div className="text-sm text-purple-700">
+                                  AI actually "saw" the video frames for ultra-detailed analysis
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* 📊 结构化数据卡片 */}
+                        {result.analysis?.structured && (
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                            
+                            {result.analysis.structured.replicationScore !== null && result.analysis.structured.replicationScore !== undefined && (
+                              <div className="bg-white p-5 rounded-xl border-2 border-purple-200 hover:border-purple-400 transition">
+                                <div className="flex items-center justify-between mb-2">
+                                  <div className="text-sm font-semibold text-gray-600">Replication Score</div>
+                                  <span className="text-2xl">🎯</span>
+                                </div>
+                                <div className="text-4xl font-black text-purple-600 mb-1">
+                                  {result.analysis.structured.replicationScore}/10
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  {result.analysis.structured.replicationScore >= 8 ? 'Very easy to copy' :
+                                   result.analysis.structured.replicationScore >= 6 ? 'Moderately easy' :
+                                   result.analysis.structured.replicationScore >= 4 ? 'Somewhat challenging' :
+                                   'Difficult to replicate'}
+                                </div>
+                              </div>
+                            )}
+                            
+                            {result.analysis.structured.difficulty !== null && result.analysis.structured.difficulty !== undefined && (
+                              <div className="bg-white p-5 rounded-xl border-2 border-blue-200 hover:border-blue-400 transition">
+                                <div className="flex items-center justify-between mb-2">
+                                  <div className="text-sm font-semibold text-gray-600">Difficulty Level</div>
+                                  <span className="text-2xl">⚡</span>
+                                </div>
+                                <div className="text-4xl font-black text-blue-600 mb-1">
+                                  {result.analysis.structured.difficulty}/10
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  {result.analysis.structured.difficulty <= 3 ? 'Beginner friendly' :
+                                   result.analysis.structured.difficulty <= 6 ? 'Intermediate level' :
+                                   'Advanced skills needed'}
+                                </div>
+                              </div>
+                            )}
+                            
+                            {result.analysis.structured.budget !== null && result.analysis.structured.budget !== undefined && (
+                              <div className="bg-white p-5 rounded-xl border-2 border-green-200 hover:border-green-400 transition">
+                                <div className="flex items-center justify-between mb-2">
+                                  <div className="text-sm font-semibold text-gray-600">Equipment Cost</div>
+                                  <span className="text-2xl">💰</span>
+                                </div>
+                                <div className="text-4xl font-black text-green-600 mb-1">
+                                  ${result.analysis.structured.budget}
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  {result.analysis.structured.budget === 0 ? 'Free! Use what you have' :
+                                   result.analysis.structured.budget < 50 ? 'Very affordable' :
+                                   result.analysis.structured.budget < 200 ? 'Moderate investment' :
+                                   'Significant investment'}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* 🎯 初学者判断横幅 */}
+                        {result.analysis?.structured?.canBeginneerDoIt && (
+                          <div className={`mb-6 p-4 rounded-xl border-2 ${
+                            result.analysis.structured.canBeginneerDoIt === 'yes' 
+                              ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-300' :
+                            result.analysis.structured.canBeginneerDoIt === 'yes-with-conditions' 
+                              ? 'bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-300' :
+                            'bg-gradient-to-r from-red-50 to-pink-50 border-red-300'
+                          }`}>
+                            <div className="flex items-start gap-3">
+                              <span className="text-3xl flex-shrink-0">
+                                {result.analysis.structured.canBeginneerDoIt === 'yes' ? '✅' :
+                                 result.analysis.structured.canBeginneerDoIt === 'yes-with-conditions' ? '⚠️' : '❌'}
+                              </span>
+                              <div className="flex-1">
+                                <div className={`font-bold text-lg mb-1 ${
+                                  result.analysis.structured.canBeginneerDoIt === 'yes' ? 'text-green-900' :
+                                  result.analysis.structured.canBeginneerDoIt === 'yes-with-conditions' ? 'text-yellow-900' :
+                                  'text-red-900'
+                                }`}>
+                                  {result.analysis.structured.canBeginneerDoIt === 'yes' 
+                                    ? '🎉 Perfect for Beginners!' :
+                                   result.analysis.structured.canBeginneerDoIt === 'yes-with-conditions' 
+                                    ? '💡 Possible with Some Requirements' :
+                                   '⚠️ Not Beginner-Friendly'}
+                                </div>
+                                <div className={`text-sm ${
+                                  result.analysis.structured.canBeginneerDoIt === 'yes' ? 'text-green-700' :
+                                  result.analysis.structured.canBeginneerDoIt === 'yes-with-conditions' ? 'text-yellow-700' :
+                                  'text-red-700'
+                                }`}>
+                                  {result.analysis.structured.canBeginneerDoIt === 'yes' 
+                                    ? 'You can start replicating this video right away with basic equipment you probably already have.'
+                                    : result.analysis.structured.canBeginneerDoIt === 'yes-with-conditions'
+                                    ? 'Review the equipment and skill requirements below. You may need to acquire some items first.'
+                                    : 'This video requires advanced skills, professional equipment, or significant investment. Consider starting with easier formats.'}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        <div className={`rounded-2xl p-6 border-3 mb-6 ${getScoreBgColor(viralScore)}`}>
+                          <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-2xl font-black text-gray-900">⚡ VIRAL ANALYSIS</h3>
+                          </div>
+                          
+                          <div className="grid md:grid-cols-2 gap-6">
+                            <div>
+                              <div className="text-sm text-gray-600 font-semibold mb-2">Overall Viral Score</div>
+                              <div className={`text-6xl font-black ${getScoreColor(viralScore)}`}>
+                                {viralScore}/10
+                              </div>
+                              <div className="mt-2">
+                                <div className="w-full bg-gray-200 rounded-full h-3">
+                                  <div 
+                                    className={`h-3 rounded-full ${viralScore >= 8 ? 'bg-green-500' : viralScore >= 6 ? 'bg-yellow-500' : 'bg-orange-500'}`}
+                                    style={{ width: `${viralScore * 10}%` }}
+                                  ></div>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm font-semibold text-gray-700">Replication Difficulty:</span>
+                                <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-bold">
+                                  ✅ Easy
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm font-semibold text-gray-700">Production Cost:</span>
+                                <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-bold">
+                                  💰 Low
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm font-semibold text-gray-700">Time to Replicate:</span>
+                                <span className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm font-bold">
+                                  ⏱️ 1-2 hours
+                                </span>
+                              </div>
+                              {viralScore >= 8 && (
+                                <div className="mt-3 p-3 bg-white rounded-lg border-2 border-green-300">
+                                  <div className="text-green-800 font-bold text-sm">
+                                    🔥 HIGH REPLICATION POTENTIAL
+                                  </div>
+                                  <div className="text-green-700 text-xs mt-1">
+                                    Recommended: Copy this format immediately
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                        <div className="text-green-700 text-xs mt-1">
-                          Recommended: Copy this format immediately
+
+                        <div className="flex gap-2 mb-6 border-b-2 border-gray-200">
+                          <button
+                            onClick={() => setResultViewMode(idx, 'execute')}
+                            className={`px-6 py-3 font-bold text-lg transition-all ${
+                              currentViewMode === 'execute'
+                                ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-t-xl'
+                                : 'text-gray-600 hover:text-gray-900'
+                            }`}
+                          >
+                            ⚡ Execute Mode
+                          </button>
+                          <button
+                            onClick={() => setResultViewMode(idx, 'learn')}
+                            className={`px-6 py-3 font-bold text-lg transition-all ${
+                              currentViewMode === 'learn'
+                                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-xl'
+                                : 'text-gray-600 hover:text-gray-900'
+                            }`}
+                          >
+                            🎓 Learn Mode
+                          </button>
                         </div>
+
+                        {currentViewMode === 'execute' && (
+                          <div className="space-y-6">
+                            
+                            <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-6 border-2 border-purple-300">
+                              <h3 className="text-2xl font-black text-gray-900 mb-4 flex items-center gap-2">
+                                <span className="text-3xl">📝</span>
+                                YOUR SCRIPT TEMPLATE
+                              </h3>
+                              
+                              <div className="mb-4">
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                  Customize for your product (optional):
+                                </label>
+                                <input
+                                  type="text"
+                                  placeholder="e.g., Vitamin C Serum, Wireless Earbuds, Protein Powder"
+                                  value={customProduct[idx] || ''}
+                                  onChange={(e) => setCustomProduct({...customProduct, [idx]: e.target.value})}
+                                  className="w-full px-4 py-2 border-2 border-purple-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400"
+                                />
+                              </div>
+
+                              <div className="bg-white p-5 rounded-xl border-2 border-purple-200 font-mono text-sm whitespace-pre-line mb-4 max-h-96 overflow-y-auto">
+                                {generateScript(result, customProduct[idx])}
+                              </div>
+
+                              <button
+                                onClick={(e) => copyToClipboard(generateScript(result, customProduct[idx]), e.target)}
+                                className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-bold w-full"
+                              >
+                                📋 Copy Script
+                              </button>
+                            </div>
+
+                            <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-6 border-2 border-green-300">
+                              <h3 className="text-2xl font-black text-gray-900 mb-4 flex items-center gap-2">
+                                <span className="text-3xl">🎬</span>
+                                PRODUCTION CHECKLIST
+                              </h3>
+
+                              <div className="grid md:grid-cols-2 gap-4 mb-4">
+                                <div className="bg-white p-4 rounded-xl border-2 border-green-200">
+                                  <div className="font-bold text-gray-900 mb-2">📱 Equipment</div>
+                                  <ul className="text-sm text-gray-700 space-y-1">
+                                    <li>• iPhone front camera</li>
+                                    <li>• Fully charged</li>
+                                    <li>• Set to 1080p</li>
+                                  </ul>
+                                </div>
+
+                                <div className="bg-white p-4 rounded-xl border-2 border-green-200">
+                                  <div className="font-bold text-gray-900 mb-2">☀️ Lighting</div>
+                                  <ul className="text-sm text-gray-700 space-y-1">
+                                    <li>• Natural window light</li>
+                                    <li>• Soft diffused quality</li>
+                                    <li>• 2800K warm tone</li>
+                                  </ul>
+                                </div>
+
+                                <div className="bg-white p-4 rounded-xl border-2 border-green-200">
+                                  <div className="font-bold text-gray-900 mb-2">🎯 Framing</div>
+                                  <ul className="text-sm text-gray-700 space-y-1">
+                                    <li>• Rule of thirds</li>
+                                    <li>• Eye-level angle</li>
+                                    <li>• Subject right 1/3</li>
+                                  </ul>
+                                </div>
+
+                                <div className="bg-white p-4 rounded-xl border-2 border-green-200">
+                                  <div className="font-bold text-gray-900 mb-2">✂️ Editing</div>
+                                  <ul className="text-sm text-gray-700 space-y-1">
+                                    <li>• 2-second avg cuts</li>
+                                    <li>• Hard cuts only</li>
+                                    <li>• Export 1080x1920</li>
+                                  </ul>
+                                </div>
+                              </div>
+
+                              <button
+                                onClick={() => downloadChecklist(result)}
+                                className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-bold w-full"
+                              >
+                                📥 Download Full Checklist
+                              </button>
+                            </div>
+
+                            {result.analysis.replicableElements && (
+                              <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-2xl p-6 border-2 border-yellow-300">
+                                <h3 className="text-2xl font-black text-gray-900 mb-4 flex items-center gap-2">
+                                  <span className="text-3xl">💡</span>
+                                  QUICK TIPS
+                                </h3>
+                                
+                                <div className="space-y-3">
+                                  {result.analysis.replicableElements.split(/\n\n|\n(?=\d)/).filter(e => e.trim()).map((element, i) => (
+                                    <div key={i} className="bg-white p-4 rounded-xl border-2 border-yellow-200">
+                                      <div className="text-gray-800 text-sm leading-relaxed whitespace-pre-line">
+                                        {element}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {currentViewMode === 'learn' && (
+                          <div className="space-y-8">
+                            
+                            {/* 🔍 调试信息 */}
+                            <div className="bg-blue-50 p-4 rounded-lg border-2 border-blue-300 mb-6">
+                              <h4 className="font-bold mb-2">🔍 Debug Info:</h4>
+                              <div className="text-xs space-y-1">
+                                <div>Has fullText: {result.analysis?.fullText ? '✅ Yes' : '❌ No'}</div>
+                                <div>Has structured: {result.analysis?.structured ? '✅ Yes' : '❌ No'}</div>
+                                <div>Has hook: {result.analysis?.hook ? '✅ Yes' : '❌ No'}</div>
+                                <div>VisionUsed: {result.visionUsed ? '✅ Yes' : '❌ No'}</div>
+                              </div>
+                              <details className="mt-2">
+                                <summary className="cursor-pointer font-bold">View Raw Data</summary>
+                                <pre className="text-xs mt-2 bg-white p-2 rounded overflow-auto max-h-64">
+                                  {JSON.stringify(result.analysis, null, 2)}
+                                </pre>
+                              </details>
+                            </div>
+
+                            {/* 如果有 fullText，直接显示 */}
+                            {result.analysis?.fullText && (
+                              <div className="bg-white rounded-2xl p-6 border-2 border-gray-200">
+                                <h3 className="text-2xl font-black text-gray-900 mb-4">
+                                  📖 Complete Analysis
+                                </h3>
+                                <div className="prose prose-sm max-w-none">
+                                  <pre className="whitespace-pre-wrap text-sm leading-relaxed bg-gray-50 p-4 rounded-lg">
+                                    {result.analysis.fullText}
+                                  </pre>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* 如果没有 fullText，显示警告 */}
+                            {!result.analysis?.fullText && (
+                              <div className="bg-yellow-50 rounded-2xl p-6 border-2 border-yellow-300">
+                                <div className="text-center">
+                                  <span className="text-4xl mb-4 block">⚠️</span>
+                                  <h3 className="text-xl font-bold text-yellow-900 mb-2">
+                                    Detailed Analysis Not Available
+                                  </h3>
+                                  <p className="text-yellow-700 mb-4">
+                                    The AI returned structured data but not the full analysis text.
+                                  </p>
+                                  {result.analysis?.structured && (
+                                    <div className="text-left bg-white p-4 rounded-lg">
+                                      <pre className="text-xs overflow-auto">
+                                        {JSON.stringify(result.analysis.structured, null, 2)}
+                                      </pre>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {result.url && (
+                          <div className="text-center pt-6 mt-6 border-t-2 border-gray-200">
+                            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                              <ShareAnalysisButton 
+                                result={result} 
+                                viralScore={viralScore}
+                              />
+                              
+                              
+                                href={result.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center justify-center gap-3 px-10 py-5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:shadow-2xl transition-all transform hover:scale-105 font-bold text-xl"
+                              >
+                                <span>🎬 Watch on TikTok</span>
+                                <span>→</span>
+                              </a>
+                            </div>
+                          </div>
+                        )}
+
                       </div>
                     )}
                   </div>
-                </div>
-              </div>
-
-              {/* Mode Switcher */}
-              <div className="flex gap-2 mb-6 border-b-2 border-gray-200">
-                <button
-                  onClick={() => setResultViewMode(idx, 'execute')}
-                  className={`px-6 py-3 font-bold text-lg transition-all ${
-                    currentViewMode === 'execute'
-                      ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-t-xl'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  ⚡ Execute Mode
-                </button>
-                <button
-                  onClick={() => setResultViewMode(idx, 'learn')}
-                  className={`px-6 py-3 font-bold text-lg transition-all ${
-                    currentViewMode === 'learn'
-                      ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-xl'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  🎓 Learn Mode
-                </button>
-              </div>
-
-              {/* Execute Mode Content */}
-              {currentViewMode === 'execute' && (
-                <div className="space-y-6">
-                  
-                  {/* Script Generator */}
-                  <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-6 border-2 border-purple-300">
-                    <h3 className="text-2xl font-black text-gray-900 mb-4 flex items-center gap-2">
-                      <span className="text-3xl">📝</span>
-                      YOUR SCRIPT TEMPLATE
-                    </h3>
-                    
-                    <div className="mb-4">
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Customize for your product (optional):
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="e.g., Vitamin C Serum, Wireless Earbuds, Protein Powder"
-                        value={customProduct[idx] || ''}
-                        onChange={(e) => setCustomProduct({...customProduct, [idx]: e.target.value})}
-                        className="w-full px-4 py-2 border-2 border-purple-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400"
-                      />
-                    </div>
-
-                    <div className="bg-white p-5 rounded-xl border-2 border-purple-200 font-mono text-sm whitespace-pre-line mb-4 max-h-96 overflow-y-auto">
-                      {generateScript(result, customProduct[idx])}
-                    </div>
-
-                    <button
-                      onClick={(e) => copyToClipboard(generateScript(result, customProduct[idx]), e.target)}
-                      className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-bold w-full"
-                    >
-                      📋 Copy Script
-                    </button>
-                  </div>
-
-                  {/* Shoot Checklist */}
-                  <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-6 border-2 border-green-300">
-                    <h3 className="text-2xl font-black text-gray-900 mb-4 flex items-center gap-2">
-                      <span className="text-3xl">🎬</span>
-                      PRODUCTION CHECKLIST
-                    </h3>
-
-                    <div className="grid md:grid-cols-2 gap-4 mb-4">
-                      <div className="bg-white p-4 rounded-xl border-2 border-green-200">
-                        <div className="font-bold text-gray-900 mb-2">📱 Equipment</div>
-                        <ul className="text-sm text-gray-700 space-y-1">
-                          <li>• iPhone front camera</li>
-                          <li>• Fully charged</li>
-                          <li>• Set to 1080p</li>
-                        </ul>
-                      </div>
-
-                      <div className="bg-white p-4 rounded-xl border-2 border-green-200">
-                        <div className="font-bold text-gray-900 mb-2">☀️ Lighting</div>
-                        <ul className="text-sm text-gray-700 space-y-1">
-                          <li>• Natural window light</li>
-                          <li>• Soft diffused quality</li>
-                          <li>• 2800K warm tone</li>
-                        </ul>
-                      </div>
-
-                      <div className="bg-white p-4 rounded-xl border-2 border-green-200">
-                        <div className="font-bold text-gray-900 mb-2">🎯 Framing</div>
-                        <ul className="text-sm text-gray-700 space-y-1">
-                          <li>• Rule of thirds</li>
-                          <li>• Eye-level angle</li>
-                          <li>• Subject right 1/3</li>
-                        </ul>
-                      </div>
-
-                      <div className="bg-white p-4 rounded-xl border-2 border-green-200">
-                        <div className="font-bold text-gray-900 mb-2">✂️ Editing</div>
-                        <ul className="text-sm text-gray-700 space-y-1">
-                          <li>• 2-second avg cuts</li>
-                          <li>• Hard cuts only</li>
-                          <li>• Export 1080x1920</li>
-                        </ul>
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={() => downloadChecklist(result)}
-                      className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-bold w-full"
-                    >
-                      📥 Download Full Checklist
-                    </button>
-                  </div>
-
-                  {/* Quick Tips */}
-                  {result.analysis.replicableElements && (
-                    <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-2xl p-6 border-2 border-yellow-300">
-                      <h3 className="text-2xl font-black text-gray-900 mb-4 flex items-center gap-2">
-                        <span className="text-3xl">💡</span>
-                        QUICK TIPS
-                      </h3>
-                      
-                      <div className="space-y-3">
-                        {result.analysis.replicableElements.split(/\n\n|\n(?=\d)/).filter(e => e.trim()).map((element, i) => (
-                          <div key={i} className="bg-white p-4 rounded-xl border-2 border-yellow-200">
-                            <div className="text-gray-800 text-sm leading-relaxed whitespace-pre-line">
-                              {element}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Learn Mode Content - COMPLETE VERSION */}
-              {currentViewMode === 'learn' && (
-                <div className="space-y-8">
-                  
-                  {/* Hook Analysis */}
-                  {result.analysis.hook && (
-                    <div className="bg-gradient-to-br from-red-50 to-pink-50 rounded-2xl p-6 border-2 border-red-300">
-                      <h3 className="text-2xl font-black text-gray-900 mb-4 flex items-center gap-2">
-                        <span className="text-3xl">🎣</span>
-                        HOOK (First 3 Seconds)
-                      </h3>
-                      
-                      <div className="mb-4">
-                        <div className="text-sm font-bold text-gray-700 mb-2">SUMMARY:</div>
-                        <div className="bg-white p-4 rounded-lg border-2 border-red-200 text-sm whitespace-pre-line">
-                          {result.analysis.hook.summary}
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <div className="text-sm font-bold text-gray-700 mb-2">DETAILED ANALYSIS:</div>
-                        <div className="bg-white p-4 rounded-lg border-2 border-red-200 text-sm leading-relaxed">
-                          {result.analysis.hook.detailed}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Story Line */}
-                  {result.analysis.storyLine && (
-                    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6 border-2 border-blue-300">
-                      <h3 className="text-2xl font-black text-gray-900 mb-4 flex items-center gap-2">
-                        <span className="text-3xl">📖</span>
-                        STORY LINE
-                      </h3>
-                      
-                      <div className="mb-4">
-                        <div className="text-sm font-bold text-gray-700 mb-2">SUMMARY:</div>
-                        <div className="bg-white p-4 rounded-lg border-2 border-blue-200 text-sm whitespace-pre-line">
-                          {result.analysis.storyLine.summary}
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <div className="text-sm font-bold text-gray-700 mb-2">DETAILED ANALYSIS:</div>
-                        <div className="bg-white p-4 rounded-lg border-2 border-blue-200 text-sm leading-relaxed">
-                          {result.analysis.storyLine.detailed}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Scripting Process */}
-                  {result.analysis.scriptingProcess && (
-                    <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-6 border-2 border-purple-300">
-                      <h3 className="text-2xl font-black text-gray-900 mb-4 flex items-center gap-2">
-                        <span className="text-3xl">✍️</span>
-                        SCRIPTING PROCESS (Backwards-Scripting Framework)
-                      </h3>
-                      
-                      <div className="mb-4">
-                        <div className="text-sm font-bold text-gray-700 mb-2">SUMMARY:</div>
-                        <div className="bg-white p-4 rounded-lg border-2 border-purple-200 text-sm whitespace-pre-line">
-                          {result.analysis.scriptingProcess.summary}
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <div className="text-sm font-bold text-gray-700 mb-2">DETAILED FRAMEWORK:</div>
-                        <div className="bg-white p-4 rounded-lg border-2 border-purple-200 text-sm leading-relaxed">
-                          {result.analysis.scriptingProcess.detailed}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* CTA Analysis */}
-                  {result.analysis.cta && (
-                    <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-6 border-2 border-green-300">
-                      <h3 className="text-2xl font-black text-gray-900 mb-4 flex items-center gap-2">
-                        <span className="text-3xl">📣</span>
-                        CALL TO ACTION
-                      </h3>
-                      
-                      <div className="mb-4">
-                        <div className="text-sm font-bold text-gray-700 mb-2">SUMMARY:</div>
-                        <div className="bg-white p-4 rounded-lg border-2 border-green-200 text-sm whitespace-pre-line">
-                          {result.analysis.cta.summary}
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <div className="text-sm font-bold text-gray-700 mb-2">DETAILED ANALYSIS:</div>
-                        <div className="bg-white p-4 rounded-lg border-2 border-green-200 text-sm leading-relaxed">
-                          {result.analysis.cta.detailed}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Visual Elements */}
-                  {result.analysis.visualElements && (
-                    <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-2xl p-6 border-2 border-yellow-300">
-                      <h3 className="text-2xl font-black text-gray-900 mb-4 flex items-center gap-2">
-                        <span className="text-3xl">🎨</span>
-                        VISUAL ELEMENTS
-                      </h3>
-                      
-                      <div className="mb-4">
-                        <div className="text-sm font-bold text-gray-700 mb-2">SUMMARY:</div>
-                        <div className="bg-white p-4 rounded-lg border-2 border-yellow-200 text-sm whitespace-pre-line">
-                          {result.analysis.visualElements.summary}
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <div className="text-sm font-bold text-gray-700 mb-2">TECHNICAL DETAILS:</div>
-                        <div className="bg-white p-4 rounded-lg border-2 border-yellow-200 text-sm leading-relaxed">
-                          {result.analysis.visualElements.detailed}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Success Factors */}
-                  {result.analysis.successFactors && (
-                    <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-6 border-2 border-indigo-300">
-                      <h3 className="text-2xl font-black text-gray-900 mb-4 flex items-center gap-2">
-                        <span className="text-3xl">🎯</span>
-                        SUCCESS FACTORS
-                      </h3>
-                      <div className="bg-white p-4 rounded-lg border-2 border-indigo-200 text-sm whitespace-pre-line leading-relaxed">
-                        {result.analysis.successFactors}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* AI Prompts */}
-                  {result.analysis.aiPrompts && (
-                    <div className="bg-gradient-to-br from-pink-50 to-red-50 rounded-2xl p-6 border-2 border-pink-300">
-                      <h3 className="text-2xl font-black text-gray-900 mb-4 flex items-center gap-2">
-                        <span className="text-3xl">🤖</span>
-                        AI PROMPT ENGINEERING
-                      </h3>
-                      
-                      {result.analysis.aiPrompts.midjourney && (
-                        <div className="mb-4">
-                          <div className="text-sm font-bold text-gray-700 mb-2">MIDJOURNEY PROMPT:</div>
-                          <div className="bg-white p-4 rounded-lg border-2 border-pink-200 text-sm font-mono">
-                            {result.analysis.aiPrompts.midjourney}
-                          </div>
-                        </div>
-                      )}
-                      
-                      {result.analysis.aiPrompts.stableDiffusion && (
-                        <div className="mb-4">
-                          <div className="text-sm font-bold text-gray-700 mb-2">STABLE DIFFUSION PROMPT:</div>
-                          <div className="bg-white p-4 rounded-lg border-2 border-pink-200 text-sm font-mono">
-                            {result.analysis.aiPrompts.stableDiffusion}
-                          </div>
-                        </div>
-                      )}
-                      
-                      {result.analysis.aiPrompts.productTemplate && (
-                        <div className="mb-4">
-                          <div className="text-sm font-bold text-gray-700 mb-2">PRODUCT SWAP TEMPLATE:</div>
-                          <div className="bg-white p-4 rounded-lg border-2 border-pink-200 text-sm font-mono">
-                            {result.analysis.aiPrompts.productTemplate}
-                          </div>
-                        </div>
-                      )}
-                      
-                      {result.analysis.aiPrompts.example && (
-                        <div className="mb-4">
-                          <div className="text-sm font-bold text-gray-700 mb-2">EXAMPLE:</div>
-                          <div className="bg-white p-4 rounded-lg border-2 border-pink-200 text-sm font-mono">
-                            {result.analysis.aiPrompts.example}
-                          </div>
-                        </div>
-                      )}
-                      
-                      {result.analysis.aiPrompts.shotBreakdown && (
-                        <div>
-                          <div className="text-sm font-bold text-gray-700 mb-2">SHOT BREAKDOWN:</div>
-                          <div className="bg-white p-4 rounded-lg border-2 border-pink-200 text-sm whitespace-pre-line">
-                            {result.analysis.aiPrompts.shotBreakdown}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Watch on TikTok Button */}
-              {result.url && (
-                <div className="text-center pt-6 mt-6 border-t-2 border-gray-200">
-                  <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                    <ShareAnalysisButton 
-                      result={result} 
-                      viralScore={viralScore}
-                    />
-                    
-                    <a
-                      href={result.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center gap-3 px-10 py-5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:shadow-2xl transition-all transform hover:scale-105 font-bold text-xl"
-                    >
-                      <span>🎬 Watch on TikTok</span>
-                      <span>→</span>
-                    </a>
-                  </div>
-                </div>
-              )}
-
+                );
+              })}
             </div>
           )}
-        </div>
-      );
-    })}
-  </div>
-)}
 
-          {/* Empty State - Improved */}
           {results.length === 0 && !loading && (
             <div className="bg-white rounded-3xl shadow-2xl p-12 text-center">
               
-              {/* 7-Day Challenge Preview */}
               <div className="mb-12">
                 <div className="text-6xl mb-4">🎯</div>
                 <h2 className="text-4xl font-black text-gray-900 mb-4">
@@ -1557,7 +1407,6 @@ ${new Date().toLocaleDateString()}`;
                   From complete zero to posting your first viral video, only 30 min/day
                 </p>
 
-                {/* 7-Day Timeline */}
                 <div className="max-w-4xl mx-auto space-y-4">
                   {[
                     { day: 1, title: 'Find Your Niche', desc: 'Analyze 10 viral videos, pick 3 easiest formats to copy', icon: '🔍' },
@@ -1582,7 +1431,6 @@ ${new Date().toLocaleDateString()}`;
                 </div>
               </div>
 
-              {/* Success Metrics */}
               <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-8 mb-8 border-2 border-green-300">
                 <h3 className="text-2xl font-black text-gray-900 mb-6">After Completing the Challenge You'll Have</h3>
                 <div className="grid md:grid-cols-3 gap-6">
@@ -1604,7 +1452,6 @@ ${new Date().toLocaleDateString()}`;
                 </div>
               </div>
 
-              {/* CTA */}
               <button
                 onClick={() => setShowEmailGate(true)}
                 className="px-12 py-5 bg-gradient-to-r from-green-400 to-emerald-500 text-white text-2xl font-black rounded-2xl hover:shadow-2xl transition-all transform hover:scale-105 mb-4"
@@ -1615,7 +1462,6 @@ ${new Date().toLocaleDateString()}`;
                 No credit card • 3 free analyses • Upgrade anytime
               </p>
 
-              {/* Recent Analyses */}
               {recentAnalyses.length > 0 && (
                 <div className="mt-12 p-6 bg-purple-50 rounded-xl border-2 border-purple-200 max-w-md mx-auto">
                   <h3 className="font-bold text-gray-900 mb-3 text-lg">🔥 Recent Analyses</h3>
@@ -1635,7 +1481,6 @@ ${new Date().toLocaleDateString()}`;
             </div>
           )}
 
-          {/* Loading State */}
           {loading && (
             <div className="bg-white rounded-2xl shadow-2xl p-16 text-center">
               <div className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-purple-200 border-t-purple-600 mb-6"></div>
