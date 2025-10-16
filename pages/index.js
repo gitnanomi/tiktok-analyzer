@@ -1507,26 +1507,26 @@ ${new Date().toLocaleDateString()}`;
                           </div>
                         )}
 
-                        {result.url && (
+                       {result.url && (
                           <div className="text-center pt-6 mt-6 border-t-2 border-gray-200">
-                            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                              <ShareAnalysisButton 
-                                result={result} 
-                                viralScore={viralScore}
-                              />
-                              
-                              
-                                href={result.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center justify-center gap-3 px-10 py-5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:shadow-2xl transition-all transform hover:scale-105 font-bold text-xl"
-                              >
-                                <span>🎬 Watch on TikTok</span>
-                                <span>&rarr;</span>
-                              </a>
-                            </div>
+                            
+                              href={result.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-block px-10 py-5 bg-purple-600 text-white rounded-xl font-bold text-xl"
+                            >
+                              Watch on TikTok
+                            </a>
                           </div>
                         )}
+
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
           {results.length === 0 && !loading && (
             <div className="bg-white rounded-3xl shadow-2xl p-12 text-center">
               
