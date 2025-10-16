@@ -1509,7 +1509,7 @@ ${new Date().toLocaleDateString()}`;
 
                        {result.url && (
                           <div className="text-center pt-6 mt-6 border-t-2 border-gray-200">
-                            
+                            <a
                               href={result.url}
                               target="_blank"
                               rel="noopener noreferrer"
