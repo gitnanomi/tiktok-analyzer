@@ -1308,7 +1308,7 @@ ${new Date().toLocaleDateString()}`;
                           </div>
                         )}
 
-                        {currentViewMode === 'learn' && (
+                       {currentViewMode === 'learn' && (
                           <div className="space-y-8">
                             
                             {/* 🔍 调试信息 */}
@@ -1328,34 +1328,35 @@ ${new Date().toLocaleDateString()}`;
                               </details>
                             </div>
 
-                            {/* 如果有 fullText，直接显示 */}
+                            {/* 📖 如果有 fullText，显示完整分析 */}
                             {result.analysis?.fullText && (
                               <div className="bg-white rounded-2xl p-6 border-2 border-gray-200">
                                 <h3 className="text-2xl font-black text-gray-900 mb-4">
-                                  📖 Complete Analysis
+                                  📖 Complete Vision Analysis
                                 </h3>
                                 <div className="prose prose-sm max-w-none">
-                                  <pre className="whitespace-pre-wrap text-sm leading-relaxed bg-gray-50 p-4 rounded-lg">
+                                  <pre className="whitespace-pre-wrap text-sm leading-relaxed bg-gray-50 p-4 rounded-lg overflow-auto max-h-[600px]">
                                     {result.analysis.fullText}
                                   </pre>
                                 </div>
                               </div>
                             )}
 
-                            {/* 如果没有 fullText，显示警告 */}
+                            {/* ⚠️ 如果没有 fullText，显示警告 */}
                             {!result.analysis?.fullText && (
                               <div className="bg-yellow-50 rounded-2xl p-6 border-2 border-yellow-300">
                                 <div className="text-center">
                                   <span className="text-4xl mb-4 block">⚠️</span>
                                   <h3 className="text-xl font-bold text-yellow-900 mb-2">
-                                    Detailed Analysis Not Available
+                                    Vision Analysis Not Available
                                   </h3>
                                   <p className="text-yellow-700 mb-4">
-                                    The AI returned structured data but not the full analysis text.
+                                    The AI returned structured data but not the detailed analysis. This usually means Vision API failed or is not configured.
                                   </p>
                                   {result.analysis?.structured && (
                                     <div className="text-left bg-white p-4 rounded-lg">
-                                      <pre className="text-xs overflow-auto">
+                                      <div className="font-bold mb-2">Structured Data Available:</div>
+                                      <pre className="text-xs overflow-auto max-h-64">
                                         {JSON.stringify(result.analysis.structured, null, 2)}
                                       </pre>
                                     </div>
@@ -1363,19 +1364,150 @@ ${new Date().toLocaleDateString()}`;
                                 </div>
                               </div>
                             )}
+
+                            {/* 🎣 Hook Analysis - 如果有旧格式数据 */}
+                            {result.analysis?.hook && (
+                              <div className="bg-gradient-to-br from-red-50 to-pink-50 rounded-2xl p-6 border-2 border-red-300">
+                                <h3 className="text-2xl font-black text-gray-900 mb-4 flex items-center gap-2">
+                                  <span className="text-3xl">🎣</span>
+                                  HOOK (First 3 Seconds)
+                                </h3>
+                                
+                                {result.analysis.hook.summary && (
+                                  <div className="mb-4">
+                                    <div className="text-sm font-bold text-gray-700 mb-2">SUMMARY:</div>
+                                    <div className="bg-white p-4 rounded-lg border-2 border-red-200 text-sm whitespace-pre-line">
+                                      {result.analysis.hook.summary}
+                                    </div>
+                                  </div>
+                                )}
+                                
+                                {result.analysis.hook.detailed && (
+                                  <div>
+                                    <div className="text-sm font-bold text-gray-700 mb-2">DETAILED ANALYSIS:</div>
+                                    <div className="bg-white p-4 rounded-lg border-2 border-red-200 text-sm leading-relaxed whitespace-pre-line">
+                                      {result.analysis.hook.detailed}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                            {/* 📖 Story Line */}
+                            {result.analysis?.storyLine && (
+                              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6 border-2 border-blue-300">
+                                <h3 className="text-2xl font-black text-gray-900 mb-4 flex items-center gap-2">
+                                  <span className="text-3xl">📖</span>
+                                  STORY LINE
+                                </h3>
+                                <div className="bg-white p-4 rounded-lg border-2 border-blue-200 text-sm leading-relaxed whitespace-pre-line">
+                                  {result.analysis.storyLine}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* 📝 Scripting Process */}
+                            {result.analysis?.scriptingProcess && (
+                              <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-6 border-2 border-purple-300">
+                                <h3 className="text-2xl font-black text-gray-900 mb-4 flex items-center gap-2">
+                                  <span className="text-3xl">📝</span>
+                                  SCRIPTING PROCESS
+                                </h3>
+                                <div className="bg-white p-4 rounded-lg border-2 border-purple-200 text-sm leading-relaxed whitespace-pre-line">
+                                  {result.analysis.scriptingProcess}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* 🎯 CTA Analysis */}
+                            {result.analysis?.cta && (
+                              <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-6 border-2 border-green-300">
+                                <h3 className="text-2xl font-black text-gray-900 mb-4 flex items-center gap-2">
+                                  <span className="text-3xl">🎯</span>
+                                  CALL TO ACTION
+                                </h3>
+                                <div className="bg-white p-4 rounded-lg border-2 border-green-200 text-sm leading-relaxed whitespace-pre-line">
+                                  {result.analysis.cta}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* 🎨 Visual Elements */}
+                            {result.analysis?.visualElements && (
+                              <div className="bg-gradient-to-br from-orange-50 to-yellow-50 rounded-2xl p-6 border-2 border-orange-300">
+                                <h3 className="text-2xl font-black text-gray-900 mb-4 flex items-center gap-2">
+                                  <span className="text-3xl">🎨</span>
+                                  VISUAL ELEMENTS
+                                </h3>
+                                <div className="bg-white p-4 rounded-lg border-2 border-orange-200 text-sm leading-relaxed whitespace-pre-line">
+                                  {result.analysis.visualElements}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* ⭐ Success Factors */}
+                            {result.analysis?.successFactors && (
+                              <div className="bg-gradient-to-br from-yellow-50 to-amber-50 rounded-2xl p-6 border-2 border-yellow-300">
+                                <h3 className="text-2xl font-black text-gray-900 mb-4 flex items-center gap-2">
+                                  <span className="text-3xl">⭐</span>
+                                  SUCCESS FACTORS
+                                </h3>
+                                <div className="bg-white p-4 rounded-lg border-2 border-yellow-200 text-sm leading-relaxed whitespace-pre-line">
+                                  {result.analysis.successFactors}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* 💡 Replicable Elements */}
+                            {result.analysis?.replicableElements && (
+                              <div className="bg-gradient-to-br from-teal-50 to-cyan-50 rounded-2xl p-6 border-2 border-teal-300">
+                                <h3 className="text-2xl font-black text-gray-900 mb-4 flex items-center gap-2">
+                                  <span className="text-3xl">💡</span>
+                                  WHAT YOU CAN REPLICATE
+                                </h3>
+                                <div className="space-y-3">
+                                  {result.analysis.replicableElements.split(/\n\n|\n(?=\d)/).filter(e => e.trim()).map((element, i) => (
+                                    <div key={i} className="bg-white p-4 rounded-xl border-2 border-teal-200">
+                                      <div className="text-gray-800 text-sm leading-relaxed whitespace-pre-line">
+                                        {element}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* 🤖 AI Prompts */}
+                            {result.analysis?.aiPrompts && Object.keys(result.analysis.aiPrompts).length > 0 && (
+                              <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-6 border-2 border-indigo-300">
+                                <h3 className="text-2xl font-black text-gray-900 mb-4 flex items-center gap-2">
+                                  <span className="text-3xl">🤖</span>
+                                  AI IMAGE PROMPTS
+                                </h3>
+                                <div className="space-y-4">
+                                  {Object.entries(result.analysis.aiPrompts).map(([key, value]) => (
+                                    <div key={key} className="bg-white p-4 rounded-xl border-2 border-indigo-200">
+                                      <div className="font-bold text-indigo-900 mb-2 capitalize">
+                                        {key.replace(/([A-Z])/g, ' $1').trim()}
+                                      </div>
+                                      <div className="text-sm text-gray-700 font-mono bg-gray-50 p-3 rounded-lg">
+                                        {value}
+                                      </div>
+                                      <button
+                                        onClick={(e) => copyToClipboard(value, e.target)}
+                                        className="mt-2 px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition font-semibold"
+                                      >
+                                        📋 Copy Prompt
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
                           </div>
                         )}
 
-                       {result.url && (
-  <div className="text-center pt-6 mt-6 border-t-2 border-gray-200">
-    <div className="flex flex-col sm:flex-row gap-4 justify-center">
-      <ShareAnalysisButton 
-        result={result} 
-        viralScore={viralScore}
-      />
-      
-      
-       {result.url && (
+                        {result.url && (
                           <div className="text-center pt-6 mt-6 border-t-2 border-gray-200">
                             <div className="flex flex-col sm:flex-row gap-4 justify-center">
                               <ShareAnalysisButton 
@@ -1390,19 +1522,11 @@ ${new Date().toLocaleDateString()}`;
                                 className="inline-flex items-center justify-center gap-3 px-10 py-5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:shadow-2xl transition-all transform hover:scale-105 font-bold text-xl"
                               >
                                 <span>🎬 Watch on TikTok</span>
-                                <span className="text-2xl">{'→'}</span>
+                                <span>&rarr;</span>
                               </a>
                             </div>
                           </div>
                         )}
-
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
           {results.length === 0 && !loading && (
             <div className="bg-white rounded-3xl shadow-2xl p-12 text-center">
               
